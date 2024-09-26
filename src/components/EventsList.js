@@ -34,6 +34,18 @@ export default function EventsList() {
     createdAt: dayjs().valueOf(),
     updatedAt: dayjs().valueOf()
   }
+  const fakeEventTitoloLungo = {
+    users: ["bsd4554lkdjfglkj"],
+    _id: "345p4etlesdkjg234l5je£$%Edfglkj",
+    title: "AAAAAAAAAAAAAA slkjfslkejr laskjearlbajslgjr alsjrgaljlgrjal sjrlej",
+    description: "Essere dalla faccia lunghissima",
+    date: dayjs().valueOf(),
+    all_day: false,
+    repeated: false,
+
+    createdAt: dayjs().valueOf(),
+    updatedAt: dayjs().valueOf()
+  }
 
   const todayEvents = [
     {...fakeEvent, label: "red"},
@@ -43,7 +55,8 @@ export default function EventsList() {
     {...fakeEvent, label: "cyan"},
     {...fakeEvent, label: "blue"},
     fakeEvent,
-    fakeEventPiccolo
+    fakeEventPiccolo,
+    fakeEventTitoloLungo
   ]; 
   //todayEvents = savedEvents.filter(e => e.due_date === selectedDay);
   //dispatchCalEvent({action: "create", event_to_dispatch: fakeEvent});
@@ -66,7 +79,7 @@ export default function EventsList() {
               > Add
               </button>
             }
-            <p className="text-xl"><span className="">{selectedDay.format("dddd D MMMM YYYY")}</span></p>
+            <p className="text-xl">{selectedDay.format("dddd D MMMM YYYY")}</p>
             <button
               onClick={() => {setShowEventsList(false); setShowEventModal(false)}}
               className="material-symbols-outlined text-white rounded text-3xl"

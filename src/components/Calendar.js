@@ -3,6 +3,7 @@
 
 import GlobalContext from "../context/GlobalContext.js"
 import React, { useEffect } from "react";
+import { useParams } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
@@ -129,7 +130,6 @@ const Calendar = () => {
   return (
     <>
     <Header/>
-
     <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
     <div className="flex mt-2" id="buttons">
       <button onClick={goToToday} className="text-4xl text-green-400 border-2 border-green-700">Oggi</button>

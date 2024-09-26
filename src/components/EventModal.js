@@ -1,3 +1,6 @@
+//TODO
+// - fare cosa detta nell'audio
+
 import React, { useContext, useEffect, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import { createEvent, deleteEvent, modifyEvent } from "../API/events.js";
@@ -98,7 +101,8 @@ function handleDelete(e) {
         <div className="h-full w-auto flex justify-right items-right">
           <form className="bg-green-950 rounded-lg w-100">
             <header className="bg-green-900 px-4 py-2 flex justify-between items-center">
-              <p className="text-xl">Crea un evento <span className="underline">{selectedDay.format("dddd D MMMM YYYY")}</span></p>
+              {/* TODO: okay quindi devo mettere il selected day come value dell'input e la scritta come span prima? forse funziona*/}
+              <input className="text-xl">Crea un evento <span className="underline">{selectedDay.format("dddd D MMMM YYYY")}</span></input>
               <div>
               {selectedEvent && (
                 <span onClick={handleDelete} className="material-icons-outlined text-white cursor-pointer">

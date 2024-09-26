@@ -1,38 +1,23 @@
+// TODO
+// - tiny scrollbars for notes and events
+
 import { useEffect } from "react"
 import { getAuthToken, isAuthenticated } from "../scripts/authentication.js"
 import axios from "axios"
+import dayjs from "dayjs"
 
 var user = null;
 
-const goToLogin = () => window.location.href = "/login";
-const goToNote = (title) => {return () => {window.location.href = `/notes/${encodeURI(title)}`}};
-const goToCalendar = (date) => { return () => { window.location.href = "/calendar"; }};
-
-const authentication_render = async () => {
-  let authenticated_render = document.getElementById("Authenticated");
-  let not_authenticated_render = document.getElementById("NotAuthenticated");
-  if (isAuthenticated()) {
-    authenticated_render.style.display = "";
-    not_authenticated_render.style.display = "none";
-    await fetchProfile();
-    if (user) setUserInfo();
-    else {
-      authenticated_render.style.display = "none";
-      not_authenticated_render.style.display = "";
-    }
-  }
-  else {
-    authenticated_render.style.display = "none";
-    not_authenticated_render.style.display = "";
-  }
-}
+const goToInitialPage = () => window.location.href = "/";
+const goToNote = (title) => { return () => window.location.href = `/notes/${encodeURI(title)}` };
+const goToCalendar = () => { return () => window.location.href = "/calendar" };
 
 //TODO vorrei tanto che, essendoci l'id dell'utente corrente in req.user.id, basterebbe fare un getuserbyid e fine, invece di fetchprofile ogni volta...
 const fetchProfile = async () => {
   try {
     const token = getAuthToken();
     if (!token) {
-      goToLogin();
+      goToInitialPage();
       return;
     }
     const response = await axios.get('http://localhost:5000/user/profile', {
@@ -121,7 +106,7 @@ const Template_SingleEvent = (event) => {
 }
 
 const createNotesPreview = () => {
-  let notes = document.getElementById("note");
+  let notes = document.getElementById("notes");
   notes.replaceChildren();
   let i = 0;
   while (i < max_notes && i < note_prova.length) {
@@ -140,15 +125,15 @@ const eventi_prova = [
     id: 1, 
     title: "Evento 1", 
     desc: "Descrizione dell'evento 1", 
-    date_of_creation: new Date(2024, 4, 27), 
-    date_of_expiry: new Date(2024, 7, 15)
+    date_of_creation: dayjs(new Date(2024, 4, 27)).valueOf(), 
+    date_of_expiry: dayjs(new Date(2024, 7, 15)).valueOf()
   },
   {
     id: 2, 
     title: "Evento 2", 
     desc: "Descrizione dell'evento 2", 
-    date_of_creation: new Date(2024, 5, 27), 
-    date_of_expiry: new Date(2024, 6, 15)
+    date_of_creation: dayjs(new Date(2024, 5, 27)).valueOf(), 
+    date_of_expiry: dayjs(new Date(2024, 6, 15)).valueOf()
   },
 ];
 
@@ -161,11 +146,16 @@ const createEventsPreview = () => {
 
   for (let e of eventi_prova) {
     let event_node = document.getElementById(`event_${e.id}`);
-    if (event_node) event_node.addEventListener("click", goToCalendar(e.date_of_expiry));
+    if (event_node) event_node.addEventListener("click", goToCalendar());
   }
 }
 
-const setUserInfo = () => {
+const setUserInfo = async () => {
+  if (!isAuthenticated()) goToInitialPage();
+
+  await fetchProfile();
+  if (!user) goToInitialPage();
+
   createNotesPreview();
   createEventsPreview();
 };
@@ -173,30 +163,20 @@ const setUserInfo = () => {
 const HomeVanilla = () => {
 
   useEffect(() => {
-    authentication_render();
+    setUserInfo();
   }, []);
 
   return (
     <>
-    <div className="flex flex-col items-center justify-center h-full min-h-fit" id="NotAuthenticated">
-      <h1 className="pt-12 pb-5 text-5xl mb-4">Benvenuto in Selfie</h1>
-      <p className="my-40 screen px-12 text-3xl">Esegui l'<a href="/login" className="text-blue-500">accesso</a> o <a href="/register" className="text-blue-500">registrati</a> per continuare.</p>
-    </div>
-
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div id="Authenticated">
-        <div className="flex mt-10">
-          <div id="note_container" className="border-2 border-gray-500 rounded-md text-gray-100 p-6 basis-1/2 m-2">
-            <h1 className="text-3xl font-bold text-center mb-6">Le mie note</h1>
-            <div id="note"></div>
-          </div>
-          <div id="eventi_container" className="border-2 border-gray-500 rounded-md p-6 basis-1/2 m-2">
-            <h1 className="text-3xl font-bold text-center mb-6">Eventi prossimi</h1>
-            <div id="events"></div>
-          </div>
-
+    <div className="flex items-center text-center justify-center h-full">
+      <div className="flex mt-10">
+        <div id="notes_container" className="border-2 border-gray-500 rounded-md text-gray-100 p-6 basis-1/2 m-2">
+          <h1 className="text-3xl font-bold text-center mb-6">Le mie note</h1>
+          <div id="notes"></div>
         </div>
+        <div id="events_container" className="border-2 border-gray-500 rounded-md p-6 basis-1/2 m-2">
+          <h1 className="text-3xl font-bold text-center mb-6">Eventi prossimi</h1>
+          <div id="events"></div>
       </div>
     </div>
   </div>
