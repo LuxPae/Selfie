@@ -1,25 +1,60 @@
-import logo from './logo.svg';
-import './App.css';
+/* TODO
 
-function App() {
+- Modelli:
+  > vorrei mostrare gli errori dei validators, ma sembra essere complicato aaaaaaa
+- dark theme fatto bene (con dark:) c'è molto da fare
+- calendario
+  > events list
+  > modal più piccolo
+  > backend (mannaggia al backed)
+- home 
+  > navbar (quasi finita)
+  > renderla carino da vedere
+- profile
+  > rifinire
+
+*/
+
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+import InitialPage from "./components/InitialPage.js"
+import Header from "./components/Header.js"
+import Home from "./components/Home.js";
+import Login from "./components/Login.js";
+import Register from "./components/Register.js";
+import Profile from "./components/Profile.js";
+import Calendar from "./components/Calendar";
+
+import Prova from "./components/Prova.js"
+
+// Imposta la lingua della data in italiano
+import dayjs from "dayjs"
+import "dayjs/locale/it"
+dayjs.locale("it");
+
+const App = () => {
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+    <Router>
+      <Routes>
+        <Route path="/" element={<><InitialPage/></>}/>
+        <Route path="/home" element={<><Header/><Home/></>}/>
+        
+        <Route path="/login" element={<Login />}/>
+        <Route path="/register" element={<Register/>}/>
+        <Route path="/profile" element={<Profile />}/>
+
+        <Route path="/calendar" element={<Calendar/>}/>
+        <Route path="/notes" element={<></>} />
+        <Route path="/pomodoro" element={<></>}/>
+
+        <Route path="/prova" element={<Prova/>}/>
+      </Routes>
+    </Router>
+    </>
   );
-}
+};
 
 export default App;
