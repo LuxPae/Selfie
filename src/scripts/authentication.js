@@ -1,19 +1,27 @@
 import axios from "axios";
+import dayjs from "dayjs"
 
 const AUTH_API_URL = "http://localhost:5000/auth";
 
 export const storeToken = (new_token) => {
     localStorage.setItem("token", new_token);
+    localStorage.setItem("token_expiration", dayjs().valueOf());
 };
 
 export const getAuthToken = () => {
     return localStorage.getItem("token");
 };
 
-export const isAuthenticated = () => !!getAuthToken();
+export const isAuthenticated = () => {
+  const token = getAuthToken();
+  const expiry = localStorage.getItem("token_expiration")
+  const expired = (dayjs().valueOf() - expiry) > 60*60*1000
+  return !!token && !expired
+}
 
 export const clearToken = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("token_expiration");
 };
 
 export const login = async ({ email, password }) => {

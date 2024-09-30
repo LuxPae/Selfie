@@ -1,8 +1,9 @@
 //TODO 
 // - import / export as ICS ?
+// - send data from child to parent: evento da modificare scelto in events lis -> calendario -> event modal
 
 import GlobalContext from "../context/GlobalContext.js"
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
@@ -15,6 +16,8 @@ const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 const Calendar = () => {
 
   var { currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, savedEvents } = React.useContext(GlobalContext);
+  //TODO rendere globale
+  const [eventToModify, setEventToModify] = useState(null)
 
   const year = currentDate.year();
   const month = currentDate.month();
@@ -92,9 +95,9 @@ const Calendar = () => {
   }
 
   const EventModalCSS = () => {
-    let css = ""
+    let css = "m-1"
     if (showEventModal) {
-      css = ""
+      css = "mx-2 rounded-lg"
     }
     return css
   }
@@ -129,13 +132,12 @@ const Calendar = () => {
 
   return (
     <>
+    <div className="flex flex-col">
     <Header/>
-    <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
-    <div className="flex mt-2" id="buttons">
-      <button onClick={goToToday} className="text-4xl text-green-400 border-2 border-green-700">Oggi</button>
-    </div>
+    {/* <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
+      TODO lui non esisterà, era solo per testare, ma tanto non funzionava hahahahahahahahahahhahahajasdfhakjbwhepohbp*/}
 
-    <div className="mt-5 flex flex-row justify-center">
+    <div className="flex justify-center">
 
       <div className={EventsListCSS()}>
         { showEventsList && <EventsList/> }
@@ -145,11 +147,10 @@ const Calendar = () => {
         {showEventModal && <EventModal/>}
       </div>
 
-
     <div className={CalendarCSS()}>
       <div className="flex justify-between items-center mb-5">
           <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
-          <h2 className="text-4xl font-bold">
+          <h2 className="text-4xl font-bold hover:cursor-pointer" onClick={goToToday}>
               {MonthFormattedStringMMMM(currentDate)} {year}
           </h2>
           <button onClick={goNextMonth} className="w-10 text-5xl font-bold">›</button>
@@ -196,6 +197,7 @@ const Calendar = () => {
             </div>
           ))}
         </div>
+      </div>
       </div>
       </div>
       </>

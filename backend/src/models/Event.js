@@ -26,7 +26,7 @@ const eventSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  all_day: {
+  allDay: {
     type: Boolean,
     required: true,
     default: false,

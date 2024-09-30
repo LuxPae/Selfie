@@ -3,31 +3,31 @@ import dayjs from "dayjs"
 import GlobalContext from "./GlobalContext.js"
 
 
-function savedEventsReducer(current_state, { action, event_to_dispatch }) {
-  console.log("Reducing events:", current_state);
-  console.log(" > action:", action);
-  console.log(" > Event to dispatch:", event_to_dispatch);
+function savedEventsReducer(current_state, { action, event }) {
+  //console.log("Reducing events:", current_state);
+  //console.log(" > action:", action);
+  //console.log(" > Event to dispatch:", event);
 
   switch (action) {
     case 'create':
-      return [...current_state, event_to_dispatch];
+      return [...current_state, event];
     case 'modify':
       // Find the index of the event to update
-      const index = current_state.findIndex(event => event._id === event_to_dispatch._id);
+      const index = current_state.findIndex(e => e._id === event._id);
       if (index !== -1) {
         // If the event exists, update it
         const updatedEvents = [...current_state];
-        updatedEvents[index] = event_to_dispatch;
+        updatedEvents[index] = event;
         return updatedEvents;
       }
       else {
         // If the event doesn't exist, add it
-        return [...current_state, event_to_dispatch];
+        return [...current_state, event];
       }
     case 'delete':
-      return current_state.filter(evt => evt._id !== event_to_dispatch._id);
+      return current_state.filter(e => e._id !== event._id);
     case 'reset':
-      return event_to_dispatch;  // Resets the current_state to the event_to_dispatch
+      return event;  // Resets the current_state to the event
     default:
       return current_state;  // Returns current current_state for unhandled action actions
   }
@@ -47,10 +47,10 @@ export default function ContextWrapper(props)
   const [ currentDate, setCurrentDate ] = useState(dayjs());
   const [ selectedDay, setSelectedDay ] = useState(dayjs());
 
-  const [ savedEvents, dispatchCalEvent ] = useReducer(savedEventsReducer, []);
+  const [ savedEvents, dispatchEvent ] = useReducer(savedEventsReducer, []);
+  const [ selectedEvent, setSelectedEvent ] = useState(null);
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
-  const [ selectedEvent, setSelectedEvent ] = useState(null);
 
 
   const [ newUser, setNewUser ] = useState({ ...user });
@@ -80,7 +80,7 @@ export default function ContextWrapper(props)
       setSelectedDay,
 
       savedEvents,
-      dispatchCalEvent,
+      dispatchEvent,
       showEventModal,
       setShowEventModal,
       showEventsList,

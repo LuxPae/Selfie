@@ -25,7 +25,7 @@ export default function ProfileEdit() {
               <label className="flex-auto text-md text-gray-500">
                 Immagine profilo (solo URL online)
                 <p>[ad esempio <a className="text-indigo-400" target="_blank" href="https://dummyimage.com">Dummy image</a> o <a className="text-indigo-400" target="_blank" href="https://commons.wikimedia.org/w/index.php?search=selfie&title=Special:MediaSearch&go=Vai&uselang=it&type=image">Wikipedia</a>]</p>
-                <input className="pl-2 mb-2 text-md" onKeyDown={e => { if(e.key === "Enter") setNewPicture(e.target.value)}} type="textarea" name="pfp" accept="image/png, image/jpeg, image/svg"/>
+                <input className="pl-2 mb-2 text-md" onKeyDown={e => { if(e.key === "Enter") setNewPicture(e.target.value)}} type="url" name="pfp" accept="image/png, image/jpeg, image/svg"/>
               </label>
               { chissà_se_rimarrà &&
                 <ProfilePicture
