@@ -1,27 +1,32 @@
-const jwt = require('jsonwebtoken');
-const Token = require('../models/Token');
+const jwt = require("jsonwebtoken");
+const User = require("../models/User")
 
 const auth = async (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '') || null;
+  if (req.path === "/auth/login" || req.path === "/auth/register") return next()
+
+  console.log("\nAuthenticating user");
+
+  const { authorization } = req.headers;
+  if (!authorization) throw new Error("Token di autorizzazione necessario")
+
+  const token = authorization.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const tokenDocument = await Token.findOne({ token });
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!tokenDocument) {
-      throw new Error();
-    }
-
-    req.user = { id: decoded.userID };
+    const { _id } = decodedToken;
+    //const tokenDocument = await Token.findOne({ token });
+    //if (!tokenDocument) {
+    //  throw new Error();
+    //}
+    //req.user = { id: decoded.userID };
+    req.user = await User.findOne({ _id }).select("_id");
+    console.log("> User authenticated")
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Please authenticate' });
+    console.log("x Error while authenticating:", error)
+    res.status(401).json({ message: "Request needs authentication" });
   }
 };
 
-const middleware_test = async (req, res, next) => {
-  console.log("Middleware per testare");
-  next();
-}
-
-module.exports = { auth, middleware_test };
+module.exports = { auth };

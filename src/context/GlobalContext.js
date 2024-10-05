@@ -1,8 +1,6 @@
 import React from "react";
 
 const GlobalContext = React.createContext({
-  user: {},
-  setUser: (new_user) => {},
   newUser: {},
   setNewUser: (new_user) => {},
   //TODO poi da togliere, forse

@@ -1,3 +1,5 @@
+//TODO
+// - se l'evento è ripetuto, nel cancellarlo si può scegliere se cancellare solo quello selezionato o tutti quelli ripetuti
 import React, { useMemo, useEffect, useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import EventsListEntry from "../components/EventsListEntry.js"
@@ -92,10 +94,10 @@ export default function EventsList() {
     //console.log("\nToday events:", todayEvents);
     //console.log("\nToday events labels:", todayEvents.map(e => e.label));
     
-    dispatchEvent({ action: "create", event: { ...fakeEventPiccolo, label: "green", _id: "palle" }});
-    dispatchEvent({ action: "create", event: { ...fakeEventPiccolo, label: "white", _id: "bolle" }});
-    dispatchEvent({ action: "create", event: { ...fakeEventPiccolo, label: "blue", _id: "sopra" }});
-    dispatchEvent({ action: "create", event: { ...fakeEventPiccolo, label: "red", _id: "ancestrale" }});
+    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "green", _id: "palle" }});
+    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "white", _id: "bolle" }});
+    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "blue", _id: "sopra" }});
+    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "red", _id: "ancestrale" }});
   }, [])
 
   const handleCheckboxChange = (filter_label) => {

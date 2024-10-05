@@ -4,7 +4,6 @@
   > vorrei mostrare gli errori dei validators, ma sembra essere complicato aaaaaaa
 - dark theme fatto bene (con dark:) c'è molto da fare
 - calendario
-  > events list
   > modal più piccolo
   > backend (mannaggia al backed)
 - home 
@@ -14,6 +13,8 @@
   > rifinire
 
 */
+import GlobalContext from "./context/GlobalContext.js"
+import { useAuthContext } from "./hooks/useAuthContext.js"
 
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -35,8 +36,23 @@ dayjs.locale("it");
 
 const App = () => {
 
+  const { user } = useAuthContext();
+  //TODO togli
+  const debug = false;
+
   return (
     <>
+    { /* TODO ovviamente da togliere*/ (user && debug) && <ul className="text-white">
+      <li>id: {user?._id}</li>
+      <li>fullName: {user?.fullName}</li>
+      <li>username: {user?.username}</li>
+      <li>email: {user?.email}</li>
+      <li>picture: {user?.picture}</li>
+      <li>bio: {user?.bio}</li>
+      <li>token: {user?.token}</li>
+      <li>created: {user?.createdAt}</li>
+      <li>updated: {user?.updatedAt}</li>
+    </ul>}
     <Router>
       <Routes>
         <Route path="/" element={<><InitialPage/></>}/>

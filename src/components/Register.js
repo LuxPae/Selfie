@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { register } from "../scripts/authentication.js"
+import { useState, useEffect} from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-//TODO https://www.youtube.com/watch?v=duyv0se4eNs
+import { useAuthContext } from "../hooks/useAuthContext.js"
+import axios from "axios"
 
 const is_uppercase = (ch) => {
   let n = ch.charCodeAt(0);
@@ -25,6 +24,16 @@ const is_valid_fullName = (ch) => {
 }
 
 const Register = () => {
+
+  const { user, dispatchUser } = useAuthContext();
+  const navigate = useNavigate();
+
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (user) navigate("/home")
+  }, [user])
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -38,10 +47,6 @@ const Register = () => {
       [e.target.name]: e.target.value
     })
   }
-
-  const [error, setError] = useState("");
-
-  const navigate = useNavigate();
 
   const validateUsername = (name) => {
     for (let ch of name) {
@@ -59,8 +64,14 @@ const Register = () => {
     try {
       validateFullName(formData.fullName);
       validateUsername(formData.username);
-      await register({ ...formData });
+      const response = await axios.post(
+        "http://localhost:5000/auth/register",
+        { ...formData },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      //localStorage.setItem("user", JSON.stringify({ ...response.data }));
       navigate("/home");
+      dispatchUser({ type: "REGISTER", payload: response.data });
     } catch (error) {
       if (error.message.includes("reading")) setError("Registazione fallita, errore del server");
       else setError(error.message);

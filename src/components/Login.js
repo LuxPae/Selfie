@@ -1,16 +1,26 @@
-import React, { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import GlobalContext from "../context/GlobalContext.js"
-import { login } from "../scripts/authentication.js"
+import { useAuthContext } from "../hooks/useAuthContext.js"
 import { useNavigate, Link } from 'react-router-dom';
 
+import axios from "axios"
+
+const BASE_URL = "http://localhost:5000/auth"
+
 const Login = () => {
-  const { setUser } = useContext(GlobalContext);
+  const { user, dispatchUser } = useAuthContext();
+
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   })
+
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) navigate("/home")
+  }, [user])
 
   const handleChange = (e) => {
     setFormData({
@@ -20,14 +30,22 @@ const Login = () => {
   }
 
   const handleSubmit = async (e) => {
-      e.preventDefault();
-      try {
-          setUser(await login({ ...formData }));
-          navigate('/home');
-      } catch (error) {
-          setError(error.message);
-          console.log(error);
-      }
+    e.preventDefault();
+
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/login`, 
+        { ...formData }, 
+        { headers: { "Content-Type": "application/json" } }
+      );
+      //localStorage.setItem("user", JSON.stringify(response.data))
+      dispatchUser({ type: "LOGIN", payload: response.data })
+      navigate("/home");
+    }
+    catch (error) {
+      console.error(error)
+      setError(error.message)
+    }
   };
 
   return (

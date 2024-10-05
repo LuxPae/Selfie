@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import GlobalContext from "../context/GlobalContext.js"
-import { logout, getAuthToken, isAuthenticated } from "../scripts/authentication.js"
+import { useAuthContext } from "../hooks/useAuthContext.js"
 import { useNavigate } from "react-router-dom";
 import ProfileEdit from "../components/ProfileEdit.js"
 import ProfilePreview from "../components/ProfilePreview.js"
@@ -13,7 +13,9 @@ import axios from "axios"
 import { deleteUser, modifyUser } from "../API/profile.js"
 
 const Profile = () => {
-  var { user, setUser, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
+  var { newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
+  const { user, dispatchUser } = useAuthContext()
+
   const [ loadingError, setLoadingError ] = useState("");
   const [ modifyError, setModifyError ] = useState("");
   const [ modifyingState, setModifyingState ] = useState(false);
@@ -26,27 +28,8 @@ const Profile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = getAuthToken();
-        if (!token) {
-          navigate("/home");
-          return;
-        }
-        const response = await axios.get("http://localhost:5000/user/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setUser(response.data);
-      }
-      catch (error) {
-        navigate("/")
-        console.error(error.message);
-      }
-    };
-    fetchProfile();
-  }, [modifyingState])
+    if(!user) navigate("/");
+  }, [user])
 
   useEffect(() => {
     setNewFullName(user?.fullName);
@@ -73,33 +56,50 @@ const Profile = () => {
     setButtonEditTextColor(modifyingState ? "red" : "green");
   }, [modifyingState]);
 
-  const handleLogout = async () => {
-    await logout();
-    setUser(null);
+  const handleLogout = () => {
+    dispatchUser({ type: "LOGOUT" });
     navigate("/");
   }
 
   const handleDeleteUser = async () => {
-    await deleteUser(user._id);
+    const id = user._id;
+    const token = user.token;
+    dispatchUser({ type: "DELETE" });
     navigate("/");
-    setUser(null);
+
+    try {
+      console.log("Deleting user", id);
+      const res = await axios.delete(
+        `http://localhost:5000/user/profile/${id}`,
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      if (res.status == 204) { console.log("deleted") }
+      else throw new Error("Could not delete user", id);
+    }
+    catch (error) {
+      console.error(error.message);
+    }
   }
 
-  const handleEditProfile = async () => {
+  const handleEditProfile = async (e) => {
+    e.preventDefault();
     //console.log("New profile info:");
     //console.log("  Full name:", newFullName);
     //console.log("  Username:", newUsername);
     //console.log("  Picture:", newPicture);
     //console.log("  Bio:", newBio);
     let new_user = {
-      _id: user._id,
+      ...user,
       fullName: newFullName,
       username: newUsername,
       picture: newPicture,
       bio: newBio
     }
     try {
-      await modifyUser(new_user);
+      const response = await modifyUser(new_user);
+      console.log("Modified user:", response);
+      //localStorage.setItem("user", JSON.stringify(response));
+      dispatchUser({ type: "MODIFY", payload: response });
       setModifyingState(false);
     }
     catch(error) {

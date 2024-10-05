@@ -2,34 +2,16 @@
 // - tiny scrollbars for notes and events
 
 import { useEffect } from "react"
-import { getAuthToken, isAuthenticated } from "../scripts/authentication.js"
 import axios from "axios"
 import dayjs from "dayjs"
 
 var user = null;
 
-const goToInitialPage = () => window.location.href = "/";
-const goToNote = (title) => { return () => window.location.href = `/notes/${encodeURI(title)}` };
-const goToCalendar = () => { return () => window.location.href = "/calendar" };
+const goToInitialPage = () => { user = null; window.location.href = "/" }
+const goToNote = (title) => { return () => { user = null; window.location.href = `/notes/${encodeURI(title)}` } };
+const goToCalendar = () => { return () => { user = null; window.location.href = "/calendar" } };
 
-//TODO vorrei tanto che, essendoci l'id dell'utente corrente in req.user.id, basterebbe fare un getuserbyid e fine, invece di fetchprofile ogni volta...
-const fetchProfile = async () => {
-  try {
-    const token = getAuthToken();
-    if (!token) {
-      goToInitialPage();
-      return;
-    }
-    const response = await axios.get('http://localhost:5000/user/profile', {
-      headers: {
-          Authorization: `Bearer ${token}`
-      }
-    });
-    user = response.data;
-  } catch (error) {
-      console.error("Failed to fetch profile: " + error);
-  }
-};
+const fetchProfile = () => user = JSON.parse(localStorage.getItem("user"));
 
 const note_prova = [
   {
@@ -151,9 +133,7 @@ const createEventsPreview = () => {
 }
 
 const setUserInfo = async () => {
-  if (!isAuthenticated()) goToInitialPage();
-
-  await fetchProfile();
+  fetchProfile();
   if (!user) goToInitialPage();
 
   createNotesPreview();

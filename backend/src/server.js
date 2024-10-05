@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser")
 
+const { auth } = require("./middleware/auth.js")
+
 const dotenv = require("dotenv")
 dotenv.config({ path: __dirname+"/.env"});
 
@@ -12,6 +14,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(auth);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)

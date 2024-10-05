@@ -1,14 +1,14 @@
 //TODO 
 // - import / export as ICS ?
-// - send data from child to parent: evento da modificare scelto in events lis -> calendario -> event modal
 
 import GlobalContext from "../context/GlobalContext.js"
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
 import { getAllEvents } from "../API/events.js"
+import { useAuthContext} from "../hooks/useAuthContext.js"
 import dayjs from "dayjs"
 
 const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
@@ -16,6 +16,13 @@ const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 const Calendar = () => {
 
   var { currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, savedEvents } = React.useContext(GlobalContext);
+  var { user } = useAuthContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if(!user) navigate("/");
+  }, [user])
+
   //TODO rendere globale
   const [eventToModify, setEventToModify] = useState(null)
 

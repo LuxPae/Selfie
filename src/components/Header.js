@@ -1,6 +1,6 @@
 import GlobalContext from "../context/GlobalContext.js"
+import { useAuthContext } from "../hooks/useAuthContext.js"
 import { useState, useEffect, useContext } from "react"
-import { logout, getAuthToken } from "../scripts/authentication.js"
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios"
 import dayjs from "dayjs"
@@ -8,7 +8,7 @@ import dayjs from "dayjs"
 export default function Header() {
 
   const navigate = useNavigate();
-  var { user } = useContext(GlobalContext);
+  const { user } = useAuthContext();
 
   const [dropped, setDropped ] = useState(false);
 
@@ -28,8 +28,8 @@ export default function Header() {
     {/* TODO renderla responsive, dropdown */}
     <nav className="bg-transparent border-gray-200">
       <div className="max-w-fit flex space-x-4 justify-items-start justify-start px-2 border rounded border-gray-600">
-      <Link to="/" className="flex items-start space-x-3">
-          <img src="https://img.freepik.com/premium-photo/sloth-touches-camera-taking-selfie-funny-selfie-portrait-animal_323015-1968.jpg?w=360" className="rounded-full w-6 h-8" alt="Selfie logo" />
+      <Link to="/home" className="flex items-start space-x-3">
+          <img src={user?.picture || "https://img.freepik.com/premium-photo/sloth-touches-camera-taking-selfie-funny-selfie-portrait-animal_323015-1968.jpg?w=360"} className="rounded-full h-8 bg-gray-50" alt="Selfie logo" />
           <span className="self-center text-2xl font-semibold whitespace-nowrap dark:hover:text-green-400 dark:text-white">Selfie</span>
       </Link>
       <div className="border-l border-gray-600 items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-user">

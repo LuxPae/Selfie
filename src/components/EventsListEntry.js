@@ -7,7 +7,7 @@ import dayjs from "dayjs"
 
 export default function EventsListEntry({ event })
 {
-  const { savedEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
+  var { savedEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
 
   const labelsColour = {
     white: "border-white",
@@ -57,7 +57,7 @@ export default function EventsListEntry({ event })
 
   const handleDelete = () => {
     console.log(`Delete event: ${event._id}`);
-    dispatchEvent({ action: "delete", event });
+    dispatchEvent({ action: "DELETE", event });
     setConfirmDelete(false);
     alert("Delete in DB: TODO")
   }

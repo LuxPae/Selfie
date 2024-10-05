@@ -1,14 +1,15 @@
 import { useEffect } from "react"
-import { isAuthenticated } from "../scripts/authentication.js"
 import { useNavigate, Link } from "react-router-dom"
+import { useAuthContext } from "../hooks/useAuthContext.js"
 
 export default function InitialPage()
 {
   const navigate = useNavigate();
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    if (isAuthenticated()) navigate("/home")
-  }, [])
+    if (user) navigate("/home")
+  }, [user])
 
   return <>
   <div className="mt-16 flex space-x-10 items-center justify-center h-full min-h-fit">
