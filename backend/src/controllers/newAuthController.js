@@ -8,8 +8,6 @@ const registerUser = async (req, res) => {
   const body = req.body;
 
   try {
-    const exists = await User.findOne({ email: body.email });
-
     //TODO da togliere ?
     if (!body.fullName || !body.email || !body.password || !body.username) {
       throw new Error("Riempi tutti i campi");
@@ -19,6 +17,7 @@ const registerUser = async (req, res) => {
     //if (!validator.isEmail(body.email)) throw new Error("Validation: Email is not valid");
     //if (!validator.isStrongPassword(body.password)) throw new Error("Validation: Password is not strong enough");
 
+    const exists = await User.findOne({ email: body.email });
     if (exists) throw new Error("Validation: Email already exists");
 
     const salt = await bcrypt.genSalt(10);

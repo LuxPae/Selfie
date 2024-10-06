@@ -45,9 +45,7 @@ const note_prova = [
 ];
 
 const max_chars = 100;
-const TruncateLongText = (text) => {
-  return text.length <= max_chars ? text : text.slice(0, max_chars)+"...";
-}
+const TruncateLongText = (text) => text.length <= max_chars ? text : text.slice(0, max_chars)+"...";
 
 const FormatDateYYYYDDMM = (date) => {
   let date_string = date.toISOString();

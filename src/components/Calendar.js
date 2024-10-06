@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
+import DayTile from "../components/DayTile.js"
 import { getAllEvents } from "../API/events.js"
 import { useAuthContext} from "../hooks/useAuthContext.js"
 import dayjs from "dayjs"
@@ -15,16 +16,22 @@ const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
 const Calendar = () => {
 
-  var { currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, savedEvents } = React.useContext(GlobalContext);
+  var { currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, dispatchEvent } = React.useContext(GlobalContext);
   var { user } = useAuthContext();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if(!user) navigate("/");
-  }, [user])
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const handleFilteredEvents = (filteredEvents) => setFilteredEvents(filteredEvents)
 
-  //TODO rendere globale
-  const [eventToModify, setEventToModify] = useState(null)
+  useEffect(() => {
+    if(!user) {
+      navigate("/");
+    } else {
+      getAllEvents(user)
+        .then(events => dispatchEvent({ type: "ALL", payload: events }))
+        .catch(error => console.error(error.message))
+    }
+  }, [user])
 
   const year = currentDate.year();
   const month = currentDate.month();
@@ -53,13 +60,6 @@ const Calendar = () => {
 
   const days = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 
-  const getPrevMonthDate = (current_month) => {
-    return dayjs(new Date(year, month-1, 1));
-  }
-  const getNextMonthDate = (current_month) => {
-    return dayjs(new Date(year, month+1, 1));
-  }
-
   const goPrevMonth = () => {
     setCurrentDate(dayjs(new Date(year, month-1, 1)));
   };
@@ -76,19 +76,10 @@ const Calendar = () => {
     let month = date.format("MMMM");
     return month[0].toUpperCase() + month.slice(1);
   }
-  const MonthFormattedStringMMM = (date) => {
-    let month = date.format("MMM");
-    return month[0].toUpperCase() + month.slice(1);
-  }
   
-  const isInCurrentMonth = (day_date) => day_date.month() === month;
-  const isDaySelected = (day_date) => {
-    return day_date.date() === selectedDay.date() && day_date.month() === selectedDay.month() && day_date.year() === selectedDay.year();
-  }
-
   useEffect(() => {
     setShowEventsList(true);
-  }, [selectedDay, setShowEventsList]);
+  }, [selectedDay]);
 
   const day_tile_height = () => {
     if (days.length <= 28) return "120px"
@@ -96,9 +87,15 @@ const Calendar = () => {
     else return "96px"
   }
 
+  //TODO sì ma non ci sarà un bottone e sarà in un useEffect con .then()... blablabla
   const prendiliTutti = async () => {
-    let events = await getAllEvents();
-    console.log(events);
+    try {
+      let events = await getAllEvents(user);
+      console.log(events);
+
+    } catch (error) {
+      console.error(error.message);
+    }
   }
 
   const EventModalCSS = () => {
@@ -141,13 +138,12 @@ const Calendar = () => {
     <>
     <div className="flex flex-col">
     <Header/>
-    {/* <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
-      TODO lui non esisterà, era solo per testare, ma tanto non funzionava hahahahahahahahahahhahahajasdfhakjbwhepohbp*/}
+    <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
 
     <div className="flex justify-center">
 
       <div className={EventsListCSS()}>
-        { showEventsList && <EventsList/> }
+        { showEventsList && <EventsList sendFilteredEvents={handleFilteredEvents}/> }
       </div>
 
       <div className={EventModalCSS()}>
@@ -156,58 +152,20 @@ const Calendar = () => {
 
     <div className={CalendarCSS()}>
       <div className="flex justify-between items-center mb-5">
-          <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
-          <h2 className="text-4xl font-bold hover:cursor-pointer" onClick={goToToday}>
-              {MonthFormattedStringMMMM(currentDate)} {year}
-          </h2>
-          <button onClick={goNextMonth} className="w-10 text-5xl font-bold">›</button>
+        <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
+        <h2 className="text-4xl font-bold hover:cursor-pointer" title="Vai a oggi" onClick={goToToday}>
+            {MonthFormattedStringMMMM(currentDate)} {year}
+        </h2>
+        <button onClick={goNextMonth} className="w-10 text-5xl font-bold">›</button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-lg text-center">
-        {daysOfWeek.map((day, index) => (
-            <div key={index} className="font-semibold">
-                {day}
-            </div>
-        ))}
-        {days.map((day_date, index) => (
-            <div
-                key={index}
-                tabIndex="0"
-                style={{height: day_tile_height()}}
-                className={
-                  `h-16 flex items-left justify-left pl-2 pt-1 rounded-lg focus:border-white hover:border-white focus:border-4 hover:border-4 focus:text-white hover:text-white
-                   ${
-                      isInCurrentMonth(day_date) ?
-                      (
-                        (isDaySelected(day_date)) ? 
-                        "text-white border-white border-4 bg-green-900 active:bg-green-900"
-                        :
-                        "bg-green-100 text-black hover:bg-green-700 focus:bg-green-700"
-                      )
-                      :
-                      (
-                        (isDaySelected(day_date)) ? 
-                        "text-white border-white border-4 bg-stone-600 active:bg-stone-600" 
-                        :
-                        "bg-stone-400 hover:bg-stone-500 focus:bg-stone-500 text-stone-700"
-                      )
-                    }`
-                  }
-                onClick={() => setSelectedDay(day_date)}
-                onKeyUp={(event) => {
-                    if (event.key === "Enter") setSelectedDay(day_date);
-                  }
-                }
-            >
-              {index === 0 && <span>{MonthFormattedStringMMM(getPrevMonthDate(month))}&nbsp;</span> }
-              {index === days.length-trailingDays && <span>{MonthFormattedStringMMM(getNextMonthDate(month))}&nbsp;</span> }
-              {day_date.date()}
-            </div>
-          ))}
-        </div>
+        {daysOfWeek.map((day, index) => <div key={index} className="font-semibold">{day}</div> )}
+        {days.map((day_date, index) => <DayTile key={index} day_date={day_date} events={filteredEvents.filter(e => dayjs(e.date).startOf("day").isSame(day_date.startOf("day")))} index={index} last_day_of_month={days.length-trailingDays} height={day_tile_height()}/>)}
       </div>
-      </div>
-      </div>
-      </>
+    </div>
+  </div>
+  </div>
+  </>
   );
 };
 

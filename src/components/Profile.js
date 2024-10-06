@@ -10,7 +10,7 @@ import ProfilePreview from "../components/ProfilePreview.js"
 import Header from "../components/Header.js"
 import NiceButton from "../components/NiceButton.js"
 import axios from "axios"
-import { deleteUser, modifyUser } from "../API/profile.js"
+import { modifyUser } from "../API/profile.js"
 
 const Profile = () => {
   var { newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
@@ -73,7 +73,7 @@ const Profile = () => {
         `http://localhost:5000/user/profile/${id}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      if (res.status == 204) { console.log("deleted") }
+      if (res.status === 204) { console.log("deleted") }
       else throw new Error("Could not delete user", id);
     }
     catch (error) {

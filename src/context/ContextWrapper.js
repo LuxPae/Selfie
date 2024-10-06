@@ -23,25 +23,26 @@ const authReducer = (state, { type, payload }) => {
   }
 };
 
-function savedEventsReducer(current_state, { action, event }) {
-  //console.log("Reducing events:", current_state);
-  //console.log(" > action:", action);
-  //console.log(" > Event to dispatch:", event);
+function eventsReducer(state, { type, payload }) {
+  //console.log("Reducing events:", state);
+  //console.log(" > type:", type);
+  //console.log(" > Event to dispatch:", payload);
 
-  switch (action) {
-    case 'CREATE': return [...current_state, event];
-    case 'MODIFY': {
-      const index = current_state.findIndex(e => e._id === event._id);
+  switch (type) {
+    case "CREATE": return [...state, payload];
+    case "MODIFY": {
+      const index = state.findIndex(e => e._id === payload._id);
       if (index !== -1) {
-        const updatedEvents = [...current_state];
-        updatedEvents[index] = event;
+        const updatedEvents = [...state];
+        updatedEvents[index] = payload;
         return updatedEvents;
       }
-      else return [...current_state, event];
+      else return [...state, payload];
     }
-    case 'DELETE': return current_state.filter(e => e._id !== event._id);
-    case 'RESET': return event; 
-    default: return current_state;
+    case "DELETE": return state.filter(e => e._id !== payload._id);
+    case "ALL":
+      return payload;  
+    default: return state;
   }
 }
 
@@ -53,7 +54,7 @@ export default function ContextWrapper({ children })
   const [ currentDate, setCurrentDate ] = useState(dayjs());
   const [ selectedDay, setSelectedDay ] = useState(dayjs());
 
-  const [ savedEvents, dispatchEvent ] = useReducer(savedEventsReducer, []);
+  const [ allEvents, dispatchEvent ] = useReducer(eventsReducer, []);
   const [ selectedEvent, setSelectedEvent ] = useState(null);
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
@@ -92,7 +93,7 @@ export default function ContextWrapper({ children })
         selectedDay,
         setSelectedDay,
 
-        savedEvents,
+        allEvents,
         dispatchEvent,
         showEventModal,
         setShowEventModal,

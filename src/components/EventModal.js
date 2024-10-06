@@ -4,8 +4,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import { useAuthContext } from "../hooks/useAuthContext.js"
-import { createEvent, deleteEvent, modifyEvent } from "../API/events.js";
-import {v4 as uuidv4} from "uuid"
+import { createEvent, modifyEvent } from "../API/events.js";
 import dayjs from "dayjs"
 
 const labelsClasses = [
@@ -55,8 +54,7 @@ export default function EventModal() {
     setFormData(event_data())
     setAllDay(selectedEvent?.allDay)
     setRepeated(selectedEvent?.repeated)
-    if (selectedEvent) console.log(selectedEvent);
-  }, [selectedEvent, setSelectedEvent])
+  }, [selectedEvent])
 
   const handleChange = (e) => {
     setFormData({
@@ -139,64 +137,42 @@ export default function EventModal() {
   }
 
   async function handleSubmit(e) {
-    console.log("Submitting event");
-    if (!selectedEvent) console.log("Creating new event")
-    else console.log("Modifying event")
     e.preventDefault();
+    //if (!selectedEvent) console.log("Creating new event")
+    //else console.log("Modifying event")
   
-    if (!user._id || user._id === 0) throw new Error("No id?")
-    const calendarEvent = {
-      _id: selectedEvent ? selectedEvent._id : uuidv4(),
+    var event = {
+      ...formData,
       users: [user._id],
-      ...formData
+      date: formData.date.valueOf(),
+      begin: formData.begin.valueOf(),
+      end: formData.begin.valueOf()
     };
-    console.log(calendarEvent)
+    //console.log(event)
   
     if (selectedEvent) {
+      event = { ...event, _id: selectedEvent._id };
       try {
-        //TODO prima o poi verrà sistemato il backend
-        //await modifyEvent(selectedEvent._id, calendarEvent) // Call modifyEvent with the event ID and updated data
-        dispatchEvent({ action: "MODIFY", event: calendarEvent }); // Assuming the API returns the updated event
-      }
-      catch(err) {
-        console.error('Error modifying event:', err);
+        const modified_event = await modifyEvent(event, user)
+        if (!modified_event) throw new Error("Could not modify event");
+        else dispatchEvent({ type: "MODIFY", payload: event });
+      } catch(error) {
+        console.error('Error modifying event:', error.message);
         // Handle error appropriately (e.g., show error message to the user)
       }
     }
     else {
       try {
-        alert("Create event in DB: TODO")
-        //TODO prima o poi verrà sistemato il backend
-        //await createEvent(calendarEvent)
-        if (!calendarEvent) throw new Error("Could not create event")
-        else {
-          dispatchEvent({ action: "CREATE", event: calendarEvent }); // Assuming the API returns the created event
-        }
-      }
-      catch(err) {
-        console.error('Error creating event:', err);
+        const new_event = await createEvent(event, user)
+        if (!new_event) throw new Error("Could not create event")
+        else dispatchEvent({ type: "CREATE", payload: event });
+      } catch(error) {
+        console.error('Error creating event:', error.message);
         // Handle error appropriately (e.g., show error message to the user)
       }
     }
     setSelectedEvent(null);
     setShowEventModal(false);
-  }
-
-  function handleDelete(e) {
-    e.preventDefault();
-    if (selectedEvent) {
-      // Call the API to delete the event
-      deleteEvent(selectedEvent._id)
-        .then(() => {
-          dispatchEvent({ action: "DELETE", event: selectedEvent });
-        })
-        .catch(error => {
-          console.error('Error deleting event:', error);
-          // Handle error appropriately (e.g., show error message to the user)
-        });
-    }
-    setShowEventModal(false);
-    setSelectedEvent(null);
   }
 
   function closeModal() {

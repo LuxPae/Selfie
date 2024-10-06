@@ -25,7 +25,7 @@ const PROFILE_API_URL = "http://localhost:5000/user/profile"
 export const getUserById = async (id, token) => {
   try {
     const res = await axios.get(`${PROFILE_API_URL}/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.status == 200) {
+    if (res.status === 200) {
       console.log("Found user with id "+id+":", res.data)
       return res.data;
     }
@@ -40,7 +40,7 @@ export const getUserById = async (id, token) => {
 export const modifyUser = async (modified_user) => {
   try {
     const res = await axios.patch(PROFILE_API_URL, { modified_user }, { headers: { Authorization: `Bearer ${modified_user.token}` } });
-    if (res.status == 200) return res.data;
+    if (res.status === 200) return res.data;
     else throw new Error("Could not modify user")
   }
   catch(error) {
@@ -55,7 +55,7 @@ export const deleteUser = async (user) => {
       `${PROFILE_API_URL}/${user._id}`,
       { headers: { Authorization: `Bearer ${user.token}` }}
     );
-    if (res.status != 204) throw new Error("Could not delete user", user._id);
+    if (res.status !== 204) throw new Error("Could not delete user", user._id);
     else return true;
   }
   catch (error) {

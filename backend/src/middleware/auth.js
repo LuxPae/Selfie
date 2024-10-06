@@ -15,12 +15,8 @@ const auth = async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id } = decodedToken;
-    //const tokenDocument = await Token.findOne({ token });
-    //if (!tokenDocument) {
-    //  throw new Error();
-    //}
-    //req.user = { id: decoded.userID };
-    req.user = await User.findOne({ _id }).select("_id");
+    const authenticated_user = await User.findOne({ _id }).select("_id");
+    req.user = { _id: authenticated_user._id.toString(), token };
     console.log("> User authenticated")
     next();
   } catch (error) {

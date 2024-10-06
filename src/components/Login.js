@@ -1,5 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
-import GlobalContext from "../context/GlobalContext.js"
+import { useState, useEffect } from 'react';
 import { useAuthContext } from "../hooks/useAuthContext.js"
 import { useNavigate, Link } from 'react-router-dom';
 

@@ -1,4 +1,5 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const dayjs = require("dayjs")
 
 const eventSchema = new mongoose.Schema({
   users: {
@@ -6,25 +7,23 @@ const eventSchema = new mongoose.Schema({
     required: true,
     ref: 'User'
   },
-  id: { 
-    type: String, 
-    required: true 
-  },
   title: {
     type: String, 
     required: true
   },
   description: { 
     type: String, 
-    required: true 
+    required: false 
   },
   label: { 
     type: String, 
-    required: true 
+    required: false,
+    default: "white"
   },
   date: {
     type: Number,
-    required: true
+    required: true,
+    default: dayjs().valueOf()
   },
   allDay: {
     type: Boolean,
@@ -39,15 +38,24 @@ const eventSchema = new mongoose.Schema({
   begin: { 
     type: Number, 
     required: true,
+    default: dayjs().valueOf()
   },
   end: {
     type: Number,
     required: true,
+    default: dayjs().valueOf()
   },
   repeated: {
-  type: Boolean,
-  default: false
+    type: Boolean,
+    default: false
+  },
+  repeatedData: {
+    every: { type: String, required: false },
+    type: { type: String, required: false },
+    endsOn: { type: Number, default: dayjs().valueOf() },
+    endsAfter: { type: Number, default: 1}
   }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Event', eventSchema);

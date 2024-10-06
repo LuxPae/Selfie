@@ -1,7 +1,10 @@
 //TODO
 // - se l'evento è ripetuto, nel cancellarlo si può scegliere se cancellare solo quello selezionato o tutti quelli ripetuti
+// - sistemare come vengono mostrati nella lista gli eventi (con tutte le informazioni)
 import React, { useMemo, useEffect, useContext, useState } from "react";
+import { getAllEvents } from "../API/events.js"
 import GlobalContext from "../context/GlobalContext";
+import { useAuthContext } from "../hooks/useAuthContext.js"
 import EventsListEntry from "../components/EventsListEntry.js"
 import dayjs from "dayjs"
 
@@ -25,58 +28,17 @@ const labelsBG = {
   blue: "bg-blue-600"
 }
 
-export default function EventsList() {
+export default function EventsList({ sendFilteredEvents }) {
 
-  var { savedEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
+  var { allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
+  var { user } = useAuthContext();
+
+  const  todayEvents = useMemo(() => allEvents.filter(e => selectedDay.date() === dayjs(e.date).date()), [selectedDay, allEvents, dispatchEvent]);
 
   const [ showFilters, setShowFilters ] = useState(false)
   const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
 
-
-  const fakeEvent = {
-    users: ["bsd4554lkdjfglkj"],
-    title: "Uruk",
-    description: "Evento rapito alla sua famiglia e forgiato in un evento fasullo, convinto di essere il più forte. Lorem ipsum dolor sic amet bla bla bla... sldfkjs lskjf lskjf slkjf slkdjflskjdlrbakj sdfòalkajsbòlkajs òdlfkjaslòkj lòsdjdfòlaksj  òsldkdjfòlajslòjks lòjb saalksjrvlòs jròlkajgslk rjbjls gjrlsjlòrkjasòlek lsejrh askjralskj narlkjselhr jlsk ralsejkrlesj",
-    label: "white",
-    date: dayjs().valueOf(),
-    allDay: false,
-    duration: 2.5,
-    begin: dayjs().valueOf(),
-    end: dayjs().valueOf(),
-    repeated: false,
-
-    createdAt: dayjs().valueOf(),
-    updatedAt: dayjs().valueOf()
-  }
-  const fakeEventPiccolo = {
-    users: ["bsd4554lkdjfglkj"],
-    title: "Harfoot",
-    description: "Creaturina piccina",
-    date: dayjs().valueOf(),
-    allDay: true,
-    repeated: true,
-    label: "white",
-
-    createdAt: dayjs().valueOf(),
-    updatedAt: dayjs().valueOf()
-  }
-  const fakeEventTitoloLungo = {
-    users: ["bsd4554lkdjfglkj"],
-    title: "AAAAAAAAAAAAAA slkjfslkejr laskjearlbajslgjr alsjrgaljlgrjal sjrlej",
-    description: "Essere dalla faccia lunghissima",
-    date: dayjs().valueOf(),
-    label: "white",
-    allDay: false,
-    repeated: false,
-
-    createdAt: dayjs().valueOf(),
-    updatedAt: dayjs().valueOf()
-  }
-
-  const handleFiltersOff = () => {
-    setShowFilters(false);
-    setFilters({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true });
-  }
+  const [loading, setLoading] = useState(true);
 
   const allFilters = () => {
     for (let label of Object.keys(filters)) {
@@ -85,20 +47,33 @@ export default function EventsList() {
     return true;
   }
 
-  const todayEvents = savedEvents.filter((event, i) => dayjs(event.date).isSame(selectedDay, "day"));
-  //console.log(todayEvents)
-  const filterEvents = () => allFilters() ? todayEvents : todayEvents.filter((event, i) => filters[event.label])
-  const  filteredEvents = useMemo(filterEvents, [filters, todayEvents, savedEvents, allFilters])
+  const filterAllEvents = () => allFilters() ? allEvents : allEvents.filter((event, i) => filters[event.label]);
+  const [allFilteredEvents, setAllFilteredEvents] = useState(filterAllEvents());
 
   useEffect(() => {
-    //console.log("\nToday events:", todayEvents);
-    //console.log("\nToday events labels:", todayEvents.map(e => e.label));
-    
-    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "green", _id: "palle" }});
-    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "white", _id: "bolle" }});
-    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "blue", _id: "sopra" }});
-    dispatchEvent({ action: "CREATE", event: { ...fakeEventPiccolo, label: "red", _id: "ancestrale" }});
-  }, [])
+    const newAllFillteredEvents = filterAllEvents();
+    setAllFilteredEvents(newAllFillteredEvents);
+    sendFilteredEvents(newAllFillteredEvents);
+    return () => sendFilteredEvents(allEvents);
+  }, [filters, allEvents, showFilters])
+
+  useEffect(() => {
+    if (allEvents.length > 0) setLoading(false);
+  }, [allEvents])
+
+  const handleFiltersOff = () => {
+    setShowFilters(false);
+    const resetted_filters = { white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true };
+    setFilters(resetted_filters);
+  }
+  
+  const handleClearFilters = () => {
+    const cleared_filters = { white: false, red: false, orange: false, yellow: false, green: false, cyan: false, blue: false };
+    setFilters(cleared_filters);
+  }
+
+  const filterEvents = () => allFilters() ? todayEvents : todayEvents.filter((event, i) => filters[event.label])
+  const  filteredEvents = useMemo(filterEvents, [filters, todayEvents, allFilters])
 
   const handleCheckboxChange = (filter_label) => {
     var updated_filters = {}
@@ -115,13 +90,12 @@ export default function EventsList() {
         <form className="bg-green-900 rounded-lg">
           <header className="border-b bg-green-900">
             <div className="pb-2 text-center items-center flex space-x-4 justify-between items-center mx-4 mt-2">
-              {!showEventModal && <button
-                  onClick={() => { setShowEventModal(true); setSelectedEvent(null) }}
-                  className="h-12 w-12 material-symbols-outlined text-white text-4xl border-2 rounded-full hover:bg-white hover:text-green-700"
-                  title="crea evento"
-                > Add
-                </button>
-              }
+              { !showEventModal && <button
+                onClick={() => { setShowEventModal(true); setSelectedEvent(null) }}
+                className="h-12 w-12 material-symbols-outlined text-white text-4xl border-2 rounded-full hover:bg-white hover:text-green-700"
+                title="crea evento"
+              > Add
+              </button>}
               <p className="text-xl">{selectedDay.format("dddd D MMMM YYYY")}</p>
               <button
                 onClick={() => {setShowEventsList(false); setShowEventModal(false)}}
@@ -136,10 +110,11 @@ export default function EventsList() {
             <div className="mt-2 mx-8">
               { !showFilters ?
                 <>
-                <span onClick={() => setShowFilters(true)} className="material-symbols-outlined">filter_alt</span>
+                <span onClick={() => setShowFilters(true)} className="hover:cursor-pointer material-symbols-outlined">filter_alt</span>
                 </>
                 :
                 <>
+                <span title="togli tutti" className="hover:cursor-pointer material-symbols-outlined" onClick={handleClearFilters}>clear_all</span>
                 <span className="mx-4 inline-flex space-x-4">
                   {labels.map((label, i) => (
                     <div key={i} className={`${!filters[label] ? labelsBG[label] : ""}`}>
@@ -147,12 +122,12 @@ export default function EventsList() {
                         type="checkbox"
                         checked={filters[label]}
                         onChange={() => handleCheckboxChange(label)}
-                        className={`w-6 h-6 ${labelsAccent[label]}`}
+                        className={`w-6 h-6 ${labelsAccent[label]} hover:cursor-pointer`}
                       />
                     </div>
                     ))}
                 </span>
-                <span onClick={handleFiltersOff} className="material-symbols-outlined">filter_alt_off</span>
+                <span onClick={handleFiltersOff} className="hover:cursor-pointer material-symbols-outlined">filter_alt_off</span>
                 </>
               }
             </div>
@@ -163,7 +138,7 @@ export default function EventsList() {
                 { filteredEvents.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
               </ul>
               :
-              <p className="flex justify-center self-center text-xl mt-4">Non ci sono eventi per oggi.</p>
+              <p className="flex justify-center self-center text-xl mt-4">{loading ? "Caricando gli eventi di oggi..." : "Non ci sono eventi per oggi."}</p>
             }
           </div>
         </form>

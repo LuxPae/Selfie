@@ -3,11 +3,14 @@
 
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext } from "react"
+import { deleteEvent } from "../API/events.js"
+import { useAuthContext } from "../hooks/useAuthContext.js"
 import dayjs from "dayjs"
 
 export default function EventsListEntry({ event })
 {
-  var { savedEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
+  var { allEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
+  var { user } = useAuthContext();
 
   const labelsColour = {
     white: "border-white",
@@ -32,14 +35,14 @@ export default function EventsListEntry({ event })
     const hours = Math.floor(event.duration);
     const minutes = (event.duration - hours) * 60;
 
-    const span_delimiter = minutes > 0 || hours > 0 ? " - " : ""
+    const span_delimiter = (minutes > 0 || hours > 0) ? " - " : ""
 
     const hours_str = (() => {
       if (hours === 1) return "1 ora "
       else if (hours > 1) return hours+" ore "
       else return ""
     })()
-    const hours_minutes_delimiter = hours > 0 && hours > 0 ? " e " : ""
+    const hours_minutes_delimiter = hours > 0 && minutes > 0 ? " e " : ""
 
     const minutes_str = minutes > 0 ? minutes+" minuti" : ""
 
@@ -52,15 +55,21 @@ export default function EventsListEntry({ event })
   const handleEdit = () => {
     setSelectedEvent(event)
     setShowEventModal(true)
-    alert("Edit in DB: TODO")
   }
 
-  const handleDelete = () => {
-    console.log(`Delete event: ${event._id}`);
-    dispatchEvent({ action: "DELETE", event });
+  async function handleDelete() {
+    dispatchEvent({ type: "DELETE", payload: event });
     setConfirmDelete(false);
-    alert("Delete in DB: TODO")
+    setShowEventModal(false);
+    setSelectedEvent(null);
+    try {
+      await deleteEvent(event, user);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      // Handle error appropriately (e.g., show error message to the user)
+    }
   }
+
 
   return (
   <>
@@ -96,7 +105,7 @@ export default function EventsListEntry({ event })
             <li>Creato il {dayjs(event.createdAt).format("DD MMMM YYYY")} alle {dayjs(event.createdAt).format("hh:mm")}</li>
             <li>Modificato il {dayjs(event.updatedAt).format("DD MMMM YYYY")} alle {dayjs(event.updatedAt).format("hh:mm")}</li>
             {/* TODO qui sarebbe carino mettere le informazioni di ripetizione */}
-            <li className="">Ripetuto: {event.repeated ? "Sì" : "No"}</li>
+            <li className="">Ripetuto: {!event.repeated ? "No" : "Sì"}</li>
           </ul>
         </div>
         :
