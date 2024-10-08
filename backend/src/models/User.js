@@ -63,7 +63,6 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: [true, "Nome utente necessario"],
-    unique: true,
     validate: validateUsername
   },
   fullName: {
@@ -73,7 +72,7 @@ const userSchema = new mongoose.Schema({
   },
   picture: {
     type: String,
-    default: "https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png" 
+    default: "https://img.freepik.com/premium-photo/sloth-touches-camera-taking-selfie-funny-selfie-portrait-animal_323015-1968.jpg?w=360" 
   },
   bio: {
     type: String, 

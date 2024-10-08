@@ -27,6 +27,11 @@ const GlobalContext = React.createContext({
   showEventsList: false,
   setShowEventsList: (new_state) => {},
 
+  notification: null,
+  setNotification: (new_notification) => {},
+  showNotification: false,
+  setShowNotification: (new_state) => {},
+  notify: (type, message) => {},
 
 });
 

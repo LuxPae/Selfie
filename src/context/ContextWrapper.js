@@ -64,8 +64,17 @@ export default function ContextWrapper({ children })
   //TODO poi da togliere, forse
   const [ newFullName, setNewFullName ] = useState("");
   const [ newUsername, setNewUsername ] = useState("");
-  const [ newPicture, setNewPicture ] = useState("" );
+  const [ newPicture, setNewPicture ] = useState("");
   const [ newBio, setNewBio ] = useState("");
+
+  const [ notification, setNotification ] = useState(null)
+  const [ showNotification, setShowNotification ] = useState(false);
+  const notify = (type, message) => {
+    const notification = { type, message };
+    setNotification(notification);
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 5000);
+  }
 
   useEffect(() => {
     const ls_user = JSON.parse(localStorage.getItem("user"));
@@ -101,6 +110,12 @@ export default function ContextWrapper({ children })
         setShowEventsList,
         selectedEvent,
         setSelectedEvent,
+
+        notification,
+        setNotification,
+        showNotification,
+        setShowNotification,
+        notify,
       }}>
         {children}
       </GlobalContext.Provider>

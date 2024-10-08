@@ -135,7 +135,7 @@ export default function EventsList({ sendFilteredEvents }) {
           <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
             { todayEvents.length > 0 ?
               <ul>
-                { filteredEvents.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
+                { filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf()).map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
               </ul>
               :
               <p className="flex justify-center self-center text-xl mt-4">{loading ? "Caricando gli eventi di oggi..." : "Non ci sono eventi per oggi."}</p>

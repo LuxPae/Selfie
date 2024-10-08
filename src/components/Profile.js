@@ -13,11 +13,10 @@ import axios from "axios"
 import { modifyUser } from "../API/profile.js"
 
 const Profile = () => {
-  var { newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
+  var { notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
   const { user, dispatchUser } = useAuthContext()
 
   const [ loadingError, setLoadingError ] = useState("");
-  const [ modifyError, setModifyError ] = useState("");
   const [ modifyingState, setModifyingState ] = useState(false);
   const [ button_edit_text_color, setButtonEditTextColor ] = useState(false);
 
@@ -81,6 +80,10 @@ const Profile = () => {
     }
   }
 
+  const validateUser = (user) => {
+    if (user.username.length < 3) throw new Error("Nome utente troppo corto, deve essere lungo almeno 3 caratteri")
+  }
+
   const handleEditProfile = async (e) => {
     e.preventDefault();
     //console.log("New profile info:");
@@ -96,15 +99,16 @@ const Profile = () => {
       bio: newBio
     }
     try {
+      validateUser(new_user);
       const response = await modifyUser(new_user);
       console.log("Modified user:", response);
-      //localStorage.setItem("user", JSON.stringify(response));
       dispatchUser({ type: "MODIFY", payload: response });
+      notify("Utente", "profilo modificato")
       setModifyingState(false);
     }
     catch(error) {
       //TODO qui ci vanno gli errori di validazione
-      setModifyError(error.message);
+      notify("error", error.message);
     }
   }
 
@@ -149,7 +153,6 @@ const Profile = () => {
             colour="green"
             when_clicked={handleEditProfile}
           />
-          {modifyError && <span className="pt-1 text-red-500">Attenzione: {modifyError}</span>}
           </>
           :
           <>

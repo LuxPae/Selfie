@@ -9,7 +9,7 @@ import dayjs from "dayjs"
 
 export default function EventsListEntry({ event })
 {
-  var { allEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
+  var { notify, allEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
   var { user } = useAuthContext();
 
   const labelsColour = {
@@ -23,7 +23,7 @@ export default function EventsListEntry({ event })
   }
 
   const time_span = () => {
-    if ((event.end - event.begin) <= 0) return dayjs(event.begin).format("HH:mm") 
+    if (dayjs(event.begin).isSame(dayjs(event.end))) return dayjs(event.begin).format("HH:mm") 
     else return `${dayjs(event.begin).format("HH:mm")} / ${dayjs(event.end).format("HH:mm")}`
   }
 
@@ -59,6 +59,7 @@ export default function EventsListEntry({ event })
 
   async function handleDelete() {
     dispatchEvent({ type: "DELETE", payload: event });
+    notify("Calendario", "evento eliminato")
     setConfirmDelete(false);
     setShowEventModal(false);
     setSelectedEvent(null);

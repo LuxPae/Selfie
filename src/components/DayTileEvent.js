@@ -13,13 +13,13 @@ const labelsClasses = {
 }
 
 const labelsClassesHover = {
-  white: "hover:bg-white",
-  red: "hover:bg-red-600",
-  orange: "hover:bg-orange-500",
-  yellow: "hover:bg-yellow-400",
-  green:  "hover:bg-green-500",
-  cyan: "hover:bg-cyan-400",
-  blue: "hover:bg-blue-600"
+  white: "hover:border-white",
+  red: "hover:border-red-600",
+  orange: "hover:border-orange-500",
+  yellow: "hover:border-yellow-400",
+  green:  "hover:border-green-500",
+  cyan: "hover:border-cyan-400",
+  blue: "hover:border-blue-600"
 }
 
 const MAX_CHARS = 5;
@@ -33,11 +33,11 @@ export default function DayTileEvent({ event })
   const event_date = dayjs(event.date).startOf("day")
 
   const trimmed_title = () => event.title.length <= MAX_CHARS ? event.title : event.title.slice(0, MAX_CHARS)+"...";
-  const hover = () => `${labelsClassesHover[event.label]} hover:cursor-pointer hover:rounded-full`
+  const hover = () => `${labelsClassesHover[event.label]} hover:bg-black hover:border-4`
 
   
-  return (<div className={`${hover()} flex items-center space-x-1`} title={event.title}>
-    <span className={`${labelsClasses[event.label]} h-3 w-3 rounded-full flex items-center justify-center border border-black`}></span>
+  return (<div className="flex items-center space-x-1 hover:cursor-pointer" title={event.title}>
+    <span className={`${labelsClasses[event.label]} ${hover()} h-3 w-3 rounded-full flex items-center justify-center border border-black`}></span>
     <p className="text-xs">{trimmed_title()}</p>
   </div>)
 }

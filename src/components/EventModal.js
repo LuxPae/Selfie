@@ -18,10 +18,12 @@ const labelsClasses = [
 ]
 
 export default function EventModal() {
-  var { setShowEventModal, selectedDay, setSelectedDay, dispatchEvent, selectedEvent, setSelectedEvent } = useContext(GlobalContext)
+  var { setShowEventModal, selectedDay, setSelectedDay, dispatchEvent, selectedEvent, setSelectedEvent, notify } = useContext(GlobalContext)
   const { user } = useAuthContext();
 
   const [selectingDate, setSelectingDate] = useState(false)
+  const [calendarType, setCalendarType] = useState("evento");
+  const [selectingCalendarType, setSelectingCalendarType] = useState(false);
   const [allDay, setAllDay] = useState(false);
   const [repeated , setRepeated] = useState(false);
   const [repeatedData, setRepeatedData] = useState(selectedEvent?.repeatedData || {
@@ -81,13 +83,13 @@ export default function EventModal() {
   }
 
   const handleChangeTime = (e) => {
+    console.log(e.target.name, e.target.value)
     const [hour, min] = e.target.value.split(':')
     const date = dayjs(formData.date)
     const time = date.add(hour-date.hour(), "hour").add(min-date.minute(), "minute");
-    setFormData({
-      ...formData,
-      [e.target.name]: time
-    })
+    const newFormData = { ...formData, [e.target.name]: time.valueOf() };
+    setFormData(newFormData);
+    console.log(formData);
   }
 
   const handleChangeRepeatedCheckBox = (e) => {
@@ -136,6 +138,11 @@ export default function EventModal() {
     })
   }
 
+  const handleChangeCalendarType = (e) => {
+    setCalendarType(e.target.value);
+    setSelectingCalendarType(false);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     //if (!selectedEvent) console.log("Creating new event")
@@ -155,7 +162,10 @@ export default function EventModal() {
       try {
         const modified_event = await modifyEvent(event, user)
         if (!modified_event) throw new Error("Could not modify event");
-        else dispatchEvent({ type: "MODIFY", payload: event });
+        else {
+          dispatchEvent({ type: "MODIFY", payload: event });
+          notify("Calendario", "evento modificato")
+        }
       } catch(error) {
         console.error('Error modifying event:', error.message);
         // Handle error appropriately (e.g., show error message to the user)
@@ -165,7 +175,10 @@ export default function EventModal() {
       try {
         const new_event = await createEvent(event, user)
         if (!new_event) throw new Error("Could not create event")
-        else dispatchEvent({ type: "CREATE", payload: event });
+        else {
+          dispatchEvent({ type: "CREATE", payload: event });
+          notify("Calendario", "evento creato")
+        }
       } catch(error) {
         console.error('Error creating event:', error.message);
         // Handle error appropriately (e.g., show error message to the user)
@@ -188,10 +201,19 @@ export default function EventModal() {
         <header className="bg-green-900 px-4 py-2 flex rounded-t-lg justify-between items-center">
           {/* TODO: okay quindi devo mettere il selected day come value dell'input e la scritta come span prima? forse funziona */}
           <div className="flex">
-            <span className="text-xl mr-2">{selectedEvent ? "Modifica" : "Crea"} evento</span>
+            <span className="text-xl mr-2">{selectedEvent ? "Modifica" : "Crea"}</span>
+            { selectingCalendarType ?
+              <select className="ml-[-4px] mr-1 bg-green-800" onChange={handleChangeCalendarType}>
+                <option value="">-----</option>
+                <option value="evento">evento</option>
+                <option value="attività">attività</option>
+              </select>
+              :
+              <span className="text-xl mr-2 hover:cursor-pointer" onClick={() => setSelectingCalendarType(true)}>{calendarType}</span>
+            }
             { selectingDate ?
               <>
-              <input type="date" name="date" value={formData.date} className="border mr-2 px-1 bg-green-900 text-xl" onChange={handleDateChange}/>             
+              <input type="date" name="date" value={dayjs(formData.date).format("YYYY-MM-DD")} className="border mr-2 px-1 bg-green-900 text-xl" onChange={handleDateChange}/>             
               <span className="hover:cursor-pointer material-symbols-outlined rounded mt-1 w-4 h-4" onClick={() => setSelectingDate(false)} title="annulla">cancel</span>
               </>
               :
