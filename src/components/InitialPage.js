@@ -1,11 +1,11 @@
-import { useEffect } from "react"
+import { useEffect, useContext } from "react"
 import { useNavigate, Link } from "react-router-dom"
-import { useAuthContext } from "../hooks/useAuthContext.js"
+import GlobalContext from "../context/GlobalContext.js"
 
 export default function InitialPage()
 {
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user } = useContext(GlobalContext);
 
   useEffect(() => {
     if (user) navigate("/home")

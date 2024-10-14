@@ -2,36 +2,36 @@
 // - import / export as ICS ?
 
 import GlobalContext from "../context/GlobalContext.js"
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
 import DayTile from "../components/DayTile.js"
 import { getAllEvents } from "../API/events.js"
-import { useAuthContext} from "../hooks/useAuthContext.js"
+import useCheckForUser from "../hooks/useCheckForUser.js"
 import dayjs from "dayjs"
-
 const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
 
 const Calendar = () => {
 
-  var { currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, dispatchEvent } = React.useContext(GlobalContext);
-  var { user } = useAuthContext();
+  useCheckForUser();
+
+  var { user, currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, dispatchEvent } = useContext(GlobalContext);
   const navigate = useNavigate();
 
   const [filteredEvents, setFilteredEvents] = useState([]);
   const handleFilteredEvents = (filteredEvents) => setFilteredEvents(filteredEvents)
 
   useEffect(() => {
-    if(!user) {
-      navigate("/");
-    } else {
-      getAllEvents(user)
-        .then(events => dispatchEvent({ type: "ALL", payload: events }))
-        .catch(error => console.error(error.message))
-    }
+    if(!user) navigate("/");
   }, [user])
+
+  useEffect(() => {
+    getAllEvents(user)
+      .then(events => dispatchEvent({ type: "ALL", payload: events }))
+      .catch(error => console.error(error.message))
+  }, [])
 
   const year = currentDate.year();
   const month = currentDate.month();
@@ -78,24 +78,13 @@ const Calendar = () => {
   }
   
   useEffect(() => {
-    setShowEventsList(true);
+    if (selectedDay) setShowEventsList(true);
   }, [selectedDay]);
 
   const day_tile_height = () => {
     if (days.length <= 28) return "120px"
     else if (days.length > 35) return "80px"
     else return "96px"
-  }
-
-  //TODO sì ma non ci sarà un bottone e sarà in un useEffect con .then()... blablabla
-  const prendiliTutti = async () => {
-    try {
-      let events = await getAllEvents(user);
-      console.log(events);
-
-    } catch (error) {
-      console.error(error.message);
-    }
   }
 
   const EventModalCSS = () => {
@@ -115,7 +104,7 @@ const Calendar = () => {
   }
 
   const CalendarCSS = () => {
-    let css = "max-h-auto sm:max-w-full lg:max-w-5xl p-4 bg-green-950 rounded-lg "
+    let css = "border border-green-900 max-h-auto sm:max-w-full lg:max-w-5xl p-4 bg-green-950 rounded-lg "
 
     if (!showEventsList) {
       css += " basis-full "
@@ -138,7 +127,6 @@ const Calendar = () => {
     <>
     <div className="flex flex-col">
     <Header/>
-    <button onClick={prendiliTutti} className="fixed top-0 text-lg text-green-400 border-2 border-green-700">Prendili tutti</button>
 
     <div className="flex justify-center">
 

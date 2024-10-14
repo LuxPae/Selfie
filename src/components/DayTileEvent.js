@@ -38,6 +38,7 @@ export default function DayTileEvent({ event })
   
   return (<div className="flex items-center space-x-1 hover:cursor-pointer" title={event.title}>
     <span className={`${labelsClasses[event.label]} ${hover()} h-3 w-3 rounded-full flex items-center justify-center border border-black`}></span>
-    <p className="text-xs">{trimmed_title()}</p>
+    {/*<p className="text-xs">{trimmed_title()}</p>*/}
+    <p className="text-xs">{event.title}</p>
   </div>)
 }

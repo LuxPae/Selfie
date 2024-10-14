@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useAuthContext } from "../hooks/useAuthContext.js"
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import GlobalContext from "../context/GlobalContext.js"
+import { TOKEN_EXPIRATION } from "../scripts/CONSTANTS.js"
+import dayjs from "dayjs"
 
 import axios from "axios"
 
 const BASE_URL = "http://localhost:5000/auth"
 
 const Login = () => {
-  const { user, dispatchUser } = useAuthContext();
+
+  const { user, dispatchUser } = useContext(GlobalContext);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -37,11 +40,16 @@ const Login = () => {
         { ...formData }, 
         { headers: { "Content-Type": "application/json" } }
       );
-      //localStorage.setItem("user", JSON.stringify(response.data))
+      localStorage.setItem("user", JSON.stringify(response.data))
+
+      const expiration_date = dayjs().add(TOKEN_EXPIRATION, "hour")
+      localStorage.setItem("tokenExpiration", expiration_date)
+
       dispatchUser({ type: "LOGIN", payload: response.data })
-      navigate("/home");
+      navigate("/home")
     }
     catch (error) {
+      localStorage.removeItem("user");
       console.error(error)
       setError(error.message)
     }

@@ -28,6 +28,7 @@ import Calendar from "./components/Calendar";
 import dayjs from "dayjs"
 import "dayjs/locale/it"
 dayjs.locale("it");
+dayjs.extend(require("dayjs/plugin/objectSupport"))
 
 const App = () => {
 

@@ -1,31 +1,14 @@
-import { useState, useEffect} from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuthContext } from "../hooks/useAuthContext.js"
+import { validateUser, validateUsername, validateFullName } from "../scripts/userValidators.js"
+import GlobalContext from "../context/GlobalContext.js"
+import { TOKEN_EXPIRATION } from "../scripts/CONSTANTS.js"
 import axios from "axios"
-
-const is_uppercase = (ch) => {
-  let n = ch.charCodeAt(0);
-  return (n >= 65 && n <= 90);
-}
-const is_lowercase = (ch) => {
-  let n = ch.charCodeAt(0);
-  return (n >= 97 && n <= 122);
-}
-const is_number = (ch) => {
-  let n = ch.charCodeAt(0);
-  return (n >= 48 && n <= 57);
-}
-const is_valid_username = (ch) => {
-  return (is_lowercase(ch) || is_uppercase(ch) || is_number(ch) || ch === "_")
-}
-
-const is_valid_fullName = (ch) => {
-  return (is_lowercase(ch) || is_uppercase(ch) || is_number(ch) || ch === " ")
-}
+import dayjs from "dayjs"
 
 const Register = () => {
 
-  const { user, dispatchUser } = useAuthContext();
+  const { user, dispatchUser } = useContext(GlobalContext);
   const navigate = useNavigate();
 
   const [error, setError] = useState("");
@@ -48,31 +31,26 @@ const Register = () => {
     })
   }
 
-  const validateUsername = (name) => {
-    for (let ch of name) {
-      if (!is_valid_username(ch)) throw new Error(`Carattere non valido nel nome utente: ${ch}`);
-    }
-  }
-  const validateFullName = (name) => {
-    for (let ch of name) {
-      if (!is_valid_fullName(ch)) throw new Error(`Carattere non valido nel nome completo: ${ch}`);
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      validateFullName(formData.fullName);
-      validateUsername(formData.username);
+      validateUser(formData);
+      //validateFullName(formData.fullName);
+      //validateUsername(formData.username);
       const response = await axios.post(
         "http://localhost:5000/auth/register",
         { ...formData },
         { headers: { "Content-Type": "application/json" } }
       );
-      //localStorage.setItem("user", JSON.stringify({ ...response.data }));
-      navigate("/home");
+      localStorage.setItem("user", JSON.stringify({ ...response.data }));
+
+      const expiration_date = dayjs().add(TOKEN_EXPIRATION, "hour")
+      localStorage.setItem("tokenExpiration", expiration_date)
+
       dispatchUser({ type: "REGISTER", payload: response.data });
+      navigate("/home");
     } catch (error) {
+      localStorage.removeItem("user");
       if (error.message.includes("reading")) setError("Registazione fallita, errore del server");
       else setError(error.message);
     }

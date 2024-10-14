@@ -1,22 +1,20 @@
-import { useState, useEffect, useReducer } from "react"
+import { useState, useReducer } from "react"
 import dayjs from "dayjs"
 import GlobalContext from "./GlobalContext.js"
-import AuthContext from "./AuthContext.js"
 
-const authReducer = (state, { type, payload }) => {
+const userReducer = (state, { type, payload }) => {
   //console.log("Dispatching user: ");
   //console.log("Type:", type);
   //console.log("Payload:", payload);
   switch (type) {
     case "REGISTER": 
     case "LOGIN": 
+    case "SET":
     case "MODIFY": 
-      localStorage.setItem("user", JSON.stringify({ ...payload }));
-      return { ...payload };
+      return payload;
 
     case "LOGOUT": 
     case "DELETE":
-      localStorage.removeItem("user");
       return null;
 
     default: return state;
@@ -48,8 +46,7 @@ function eventsReducer(state, { type, payload }) {
 
 export default function ContextWrapper({ children })
 {
-  //prima era authReducer, { user: null}, ma perché un oggetto con user dentro? è già assegnaato a user, non capisco
-  const [user, dispatchUser] = useReducer(authReducer, null);
+  const [user, dispatchUser] = useReducer(userReducer, null);
 
   const [ currentDate, setCurrentDate ] = useState(dayjs());
   const [ selectedDay, setSelectedDay ] = useState(dayjs());
@@ -58,7 +55,6 @@ export default function ContextWrapper({ children })
   const [ selectedEvent, setSelectedEvent ] = useState(null);
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
-
 
   const [ newUser, setNewUser ] = useState(null);
   //TODO poi da togliere, forse
@@ -76,50 +72,42 @@ export default function ContextWrapper({ children })
     setTimeout(() => setShowNotification(false), 5000);
   }
 
-  useEffect(() => {
-    const ls_user = JSON.parse(localStorage.getItem("user"));
-    if (ls_user) {
-      dispatchUser({ type: "LOGIN", payload: ls_user });
-    }
-  }, []);
-
   return (
-    <>
-    <AuthContext.Provider value={{ user, dispatchUser }}>
-      <GlobalContext.Provider value={{
-        //TODO togliere?
-        newFullName,
-        setNewFullName,
-        newUsername,
-        setNewUsername,
-        newPicture,
-        setNewPicture,
-        newBio,
-        setNewBio,
+    <GlobalContext.Provider value={{
+      user,
+      dispatchUser,
 
-        currentDate,
-        setCurrentDate,
-        selectedDay,
-        setSelectedDay,
+      //TODO togliere?
+      newFullName,
+      setNewFullName,
+      newUsername,
+      setNewUsername,
+      newPicture,
+      setNewPicture,
+      newBio,
+      setNewBio,
 
-        allEvents,
-        dispatchEvent,
-        showEventModal,
-        setShowEventModal,
-        showEventsList,
-        setShowEventsList,
-        selectedEvent,
-        setSelectedEvent,
+      currentDate,
+      setCurrentDate,
+      selectedDay,
+      setSelectedDay,
 
-        notification,
-        setNotification,
-        showNotification,
-        setShowNotification,
-        notify,
-      }}>
-        {children}
-      </GlobalContext.Provider>
-    </AuthContext.Provider>
-    </>
+      allEvents,
+      dispatchEvent,
+      showEventModal,
+      setShowEventModal,
+      showEventsList,
+      setShowEventsList,
+      selectedEvent,
+      setSelectedEvent,
+
+      notification,
+      setNotification,
+      showNotification,
+      setShowNotification,
+      notify,
+    }}>
+      {children}
+    </GlobalContext.Provider>
   );
 }

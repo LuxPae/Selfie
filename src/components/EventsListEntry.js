@@ -1,16 +1,11 @@
-// TODO
-// - modify
-
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext } from "react"
 import { deleteEvent } from "../API/events.js"
-import { useAuthContext } from "../hooks/useAuthContext.js"
 import dayjs from "dayjs"
 
 export default function EventsListEntry({ event })
 {
-  var { notify, allEvents, dispatchEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
-  var { user } = useAuthContext();
+  var { user, notify, allEvents, dispatchEvent, selectedEvent, setSelectedEvent, setShowEventModal } = useContext(GlobalContext)
 
   const labelsColour = {
     white: "border-white",
@@ -28,10 +23,9 @@ export default function EventsListEntry({ event })
   }
 
   const duration = () => {
-    //console.log(event.duration)
     if (event.duration <= 0) return ""
 
-    //TODO vabbè qua ci sono altre mille cose da fare, ad esempio se l'ora è una sola bla bla bla
+    //TODO vabbè qua ci sono altre mille cose da fare, ad esempio?
     const hours = Math.floor(event.duration);
     const minutes = (event.duration - hours) * 60;
 
@@ -58,16 +52,18 @@ export default function EventsListEntry({ event })
   }
 
   async function handleDelete() {
+    if (event == selectedEvent) {
+      setShowEventModal(false);
+      setSelectedEvent(null);
+    }
     dispatchEvent({ type: "DELETE", payload: event });
     notify("Calendario", "evento eliminato")
     setConfirmDelete(false);
-    setShowEventModal(false);
-    setSelectedEvent(null);
     try {
       await deleteEvent(event, user);
     } catch (error) {
       console.error('Error deleting event:', error);
-      // Handle error appropriately (e.g., show error message to the user)
+      notify("error", error.message);
     }
   }
 
@@ -103,8 +99,8 @@ export default function EventsListEntry({ event })
           <div onClick={() => setShowMore(false)} className="hover:cursor-pointer material-symbols-outlined">arrow_drop_down</div>
           <ul>
             {/* TODO devo ancora fare che quando si modifica cambia la data*/}
-            <li>Creato il {dayjs(event.createdAt).format("DD MMMM YYYY")} alle {dayjs(event.createdAt).format("hh:mm")}</li>
-            <li>Modificato il {dayjs(event.updatedAt).format("DD MMMM YYYY")} alle {dayjs(event.updatedAt).format("hh:mm")}</li>
+            <li>Creato il {dayjs(event.createdAt).format("D MMMM YYYY")} alle {dayjs(event.createdAt).format("hh:mm")}</li>
+            <li>Modificato il {dayjs(event.updatedAt).format("D MMMM YYYY")} alle {dayjs(event.updatedAt).format("hh:mm")}</li>
             {/* TODO qui sarebbe carino mettere le informazioni di ripetizione */}
             <li className="">Ripetuto: {!event.repeated ? "No" : "Sì"}</li>
           </ul>

@@ -2,9 +2,7 @@
 // - se l'evento è ripetuto, nel cancellarlo si può scegliere se cancellare solo quello selezionato o tutti quelli ripetuti
 // - sistemare come vengono mostrati nella lista gli eventi (con tutte le informazioni)
 import React, { useMemo, useEffect, useContext, useState } from "react";
-import { getAllEvents } from "../API/events.js"
 import GlobalContext from "../context/GlobalContext";
-import { useAuthContext } from "../hooks/useAuthContext.js"
 import EventsListEntry from "../components/EventsListEntry.js"
 import dayjs from "dayjs"
 
@@ -30,15 +28,12 @@ const labelsBG = {
 
 export default function EventsList({ sendFilteredEvents }) {
 
-  var { allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
-  var { user } = useAuthContext();
+  var { user, allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
 
   const  todayEvents = useMemo(() => allEvents.filter(e => selectedDay.date() === dayjs(e.date).date()), [selectedDay, allEvents, dispatchEvent]);
 
   const [ showFilters, setShowFilters ] = useState(false)
   const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
-
-  const [loading, setLoading] = useState(true);
 
   const allFilters = () => {
     for (let label of Object.keys(filters)) {
@@ -56,10 +51,6 @@ export default function EventsList({ sendFilteredEvents }) {
     sendFilteredEvents(newAllFillteredEvents);
     return () => sendFilteredEvents(allEvents);
   }, [filters, allEvents, showFilters])
-
-  useEffect(() => {
-    if (allEvents.length > 0) setLoading(false);
-  }, [allEvents])
 
   const handleFiltersOff = () => {
     setShowFilters(false);
@@ -138,7 +129,7 @@ export default function EventsList({ sendFilteredEvents }) {
                 { filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf()).map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
               </ul>
               :
-              <p className="flex justify-center self-center text-xl mt-4">{loading ? "Caricando gli eventi di oggi..." : "Non ci sono eventi per oggi."}</p>
+              <p className="flex justify-center self-center text-xl mt-4">{"Non ci sono eventi per oggi."}</p>
             }
           </div>
         </form>

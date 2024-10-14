@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import GlobalContext from "../context/GlobalContext.js"
-import { useAuthContext } from "../hooks/useAuthContext.js"
 import { useNavigate } from "react-router-dom";
 import ProfileEdit from "../components/ProfileEdit.js"
 import ProfilePreview from "../components/ProfilePreview.js"
@@ -11,10 +10,13 @@ import Header from "../components/Header.js"
 import NiceButton from "../components/NiceButton.js"
 import axios from "axios"
 import { modifyUser } from "../API/profile.js"
+import { validateUser } from "../scripts/userValidators.js"
+import useCheckForUser from "../hooks/useCheckForUser.js"
 
 const Profile = () => {
-  var { notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
-  const { user, dispatchUser } = useAuthContext()
+  useCheckForUser();
+
+  var { user, dispatchUser, notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
 
   const [ loadingError, setLoadingError ] = useState("");
   const [ modifyingState, setModifyingState ] = useState(false);
@@ -56,13 +58,18 @@ const Profile = () => {
   }, [modifyingState]);
 
   const handleLogout = () => {
+    localStorage.removeItem("user")
+    localStorage.removeItem("tokenExpiration")
     dispatchUser({ type: "LOGOUT" });
     navigate("/");
   }
 
   const handleDeleteUser = async () => {
+    //TODO questo così non è il massimo, magari quando avrò sistemato proverò a rimetterlo dentro al try
     const id = user._id;
     const token = user.token;
+    localStorage.removeItem("user")
+    localStorage.removeItem("tokenExpiration")
     dispatchUser({ type: "DELETE" });
     navigate("/");
 
@@ -78,10 +85,6 @@ const Profile = () => {
     catch (error) {
       console.error(error.message);
     }
-  }
-
-  const validateUser = (user) => {
-    if (user.username.length < 3) throw new Error("Nome utente troppo corto, deve essere lungo almeno 3 caratteri")
   }
 
   const handleEditProfile = async (e) => {
@@ -101,7 +104,7 @@ const Profile = () => {
     try {
       validateUser(new_user);
       const response = await modifyUser(new_user);
-      console.log("Modified user:", response);
+      localStorage.setItem("user", JSON.stringify(response))
       dispatchUser({ type: "MODIFY", payload: response });
       notify("Utente", "profilo modificato")
       setModifyingState(false);

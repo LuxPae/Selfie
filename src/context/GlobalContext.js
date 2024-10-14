@@ -1,8 +1,11 @@
 import React from "react";
 
 const GlobalContext = React.createContext({
-  newUser: {},
+  user: null,
+  dispatchUser: ({ type, payload }) => {},
+  newUser: null,
   setNewUser: (new_user) => {},
+
   //TODO poi da togliere, forse
   newFullName: "",
   setNewFullName: (new_fullName) => {},
