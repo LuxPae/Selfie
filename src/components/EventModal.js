@@ -24,12 +24,7 @@ export default function EventModal() {
   const [selectingCalendarType, setSelectingCalendarType] = useState(false);
   const [allDay, setAllDay] = useState(false);
   const [repeated , setRepeated] = useState(false);
-  const [repeatedData, setRepeatedData] = useState(selectedEvent?.repeatedData || {
-    every: "",
-    type: "endsOn",
-    endsOn: null,
-    endsAfter: null,
-  })
+  const [selectingRepeatedDate, setSelectingRepeatedDate] = useState(false)
 
   const event_data = () => (selectedEvent || {
     title: "",
@@ -43,9 +38,9 @@ export default function EventModal() {
     repeated: false, 
     repeatedData: {
       every: "",
-      type: "endsOn",
-      endsOn: null,
-      endsAfter: null,
+      type: "",
+      endsOn: dayjs().valueOf(),
+      endsAfter: 1,
     },
   })
 
@@ -53,8 +48,9 @@ export default function EventModal() {
 
   useEffect(() => {
     setFormData(event_data())
-    setAllDay(selectedEvent?.allDay)
-    setRepeated(selectedEvent?.repeated)
+    console.log(formData)
+    setAllDay(selectedEvent?.allDay || false)
+    setRepeated(selectedEvent?.repeated || false)
   }, [selectedEvent])
 
   const handleChange = (e) => {
@@ -66,26 +62,29 @@ export default function EventModal() {
 
   const handleDateChange = (e) => {
     setSelectingDate(false);
-    setFormData({
+    const newFormData = {
       ...formData,
       date: dayjs(e.target.value)
-    })
+    }
+    setFormData(newFormData)
   }
 
   const handleChangeAllDay = () => {
-    setAllDay(!allDay);
+    const new_value = !allDay
+    setAllDay(new_value);
     const newFormData = {
       ...formData,
-      allDay
+      allDay: new_value
     }
     setFormData(newFormData)
   }
 
   const handleChangeRepeated = () => {
-    setRepeated(!repeated);
+    const new_value = !repeated
+    setRepeated(new_value);
     const newFormData = {
       ...formData,
-      repeated
+      repeated: new_value
     }
     setFormData(newFormData)
   }
@@ -108,32 +107,50 @@ export default function EventModal() {
   }
 
   const handleChangeRepeatedEvery = (e) => {
-    setRepeatedData({
-      ...repeatedData,
-      every: e.target.value
-    })
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        every: e.target.value
+      }
+    }
+    setFormData(newFormData)
   }
 
   const handleChangeRepetitionOption = (e) => {
-    setRepeatedData({
-      ...repeatedData,
-      type: e.target.value
-    })
-    console.log(repeatedData)
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        type: e.target.value
+      }
+    }
+    setFormData(newFormData)
   }
 
   const handleChangeRepetitionEndsOn = (e) => {
-    setRepeatedData({
-      ...repeatedData,
-      endsOn: dayjs(e.target.value)
-    })
+    console.log(e.target.value)
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        endsOn: dayjs(e.target.value).valueOf()
+      }
+    }
+    setFormData(newFormData)
+    setSelectingRepeatedDate(false);
+    console.log(formData)
   }
 
   const handleChangeRepetitionEndsAfter = (e) => {
-    setRepeatedData({
-      ...repeatedData,
-      endsAfter: e.target.value
-    })
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        endsAfter: e.target.value
+      }
+    }
+    setFormData(newFormData)
   }
 
   const handleLabelChange = (new_label) => {
@@ -154,7 +171,10 @@ export default function EventModal() {
       notify("error", tipo+" - inserisci il titolo");
       return;
     }
-    // if (!validateEvent(formData)) return; TODO
+    // if (!validateForm(formData)) {
+    //   notify("error", "...")
+    //   return; TODO
+    // }
     e.preventDefault();
   
     console.log(calendarType)
@@ -164,9 +184,10 @@ export default function EventModal() {
         users: [user._id],
         date: dayjs(formData.date).startOf("day").valueOf(),
         begin: formData.begin.valueOf(),
-        end: formData.end.valueOf()
+        end: formData.end.valueOf(),
+        repeatedData: formData.repeatedData
       };
-      //console.log(event)
+      console.log(event)
   
       if (selectedEvent) {
         event = { ...event, _id: selectedEvent._id };
@@ -247,11 +268,11 @@ export default function EventModal() {
             </span>
           </button>
         </header>
-        <div style={{scrollbarWidth: "thin"}} className="max-w-full min-w-[400px] p-3 max-h-[550px] overflow-auto">
+        <div style={{scrollbarWidth: "thin"}} className="max-w-full min-w-[450px] p-3 max-h-[500px] overflow-auto">
           <input className="mb-4 pt-3 border-0 text-white text-xl font-semibold pb-2 w-full border-b-2 border-green-900 focus:outline-none focus:ring-0 focus:border-green-500 text-center" type="text" name="title" placeholder="Titolo" value={formData.title} onChange={handleChange} required />
           <div className="mb-4 mt-2 text-white flex items-center justify-center">
             <span onClick={handleChangeAllDay} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeAllDay() }}
-                  className={`border rounded  hover:cursor-pointer p-1 ${allDay ? "border-transparent bg-green-700" : "hover:border-transparent hover:bg-green-800"}`}
+                  className={`border rounded  hover:cursor-pointer p-1 hover:bg-green-800 ${allDay ? "border-transparent bg-green-700" : "hover:border-transparent"}`}
             >
               Tutto il giorno
             </span>
@@ -266,7 +287,7 @@ export default function EventModal() {
           </div>}
           <div className="mb-4 mt-2 text-white flex items-center justify-center">
             <span onClick={handleChangeRepeated} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeRepeated() }}
-                  className={`border rounded  hover:cursor-pointer p-1 ${repeated ? "border-transparent bg-green-700" : "hover:border-transparent hover:bg-green-800"}`}
+                  className={`border rounded  hover:cursor-pointer p-1 hover:bg-green-800 ${repeated ? "border-transparent bg-green-700" : "hover:border-transparent"}`}
             >
               Si ripete
             </span>
@@ -274,27 +295,40 @@ export default function EventModal() {
           { repeated && <div className="flex-col flex items-center justify-center justify-content-center">
             <div className="flex flex-col space-x-4 items-center">
               <span className="">Ogni</span>
-              <select className="mb-4 bg-green-800" onChange={handleChangeRepeatedEvery}>
-                <option value={repeatedData.every || "mai"}>-----</option>
+              <select className="p-1 mt-2 rounded mb-4 bg-green-700 hover:bg-green-800" defaultValue={formData.repeatedData.every} onChange={handleChangeRepeatedEvery} required>
+                <option value="">-----</option>
                 <option value="day">giorno</option>
                 <option value="week">settimana, di {dayjs(formData.date).format("dddd")}</option>
                 <option value="month">mese, il giorno {dayjs(formData.date).format("D")}</option>
                 <option value="year">anno</option>
               </select>
             </div>
-            <div className="mb-8">
-              <fieldset>
+            <div className="mb-8 flex flex-col space-y-4 space-x-4 items-center">
+              <fieldset className="">
                 <legend className="mb-2">Finisce</legend>
-                  <div className="ml-4 mb-2">
-                    <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption}/>
-                    <label className="ml-2">il</label>
-                    <input type="date" className="bg-green-800 ml-3" value={(repeatedData.endsOn || dayjs()).format("YYYY-MM-DD")} onChange={handleChangeRepetitionEndsOn}/>
+                  <div className="flex ml-4 mb-2">
+                    <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsOn"}/>
+                    { selectingRepeatedDate ?
+                      <>
+                      <div className="ml-2 p-1 flex justify-between bg-green-700 rounded">
+                        <label className="">il</label>
+                        <input type="date" name="date" value={dayjs(formData.repeatedData.endsOn).format("YYYY-MM-DD")} className="ml-2 rounded bg-green-700 hover:bg-green-800"
+                               onChange={handleChangeRepetitionEndsOn} 
+                        />             
+                      </div>
+                      </>
+                      :
+                      <span className="bg-green-700 rounded ml-2 hover:bg-green-800 px-2 p-1 hover:cursor-pointer"
+                            onClick={() => setSelectingRepeatedDate(true)}>{dayjs(formData.repeatedData.endsOn).format("dddd D MMMM YYYY") || dayjs(formData.date).format("dddd D MMMM YYYY")}
+                      </span>
+                    }
+                    {/*<input type="date" className="bg-green-700 hover:bg-green-800 rounded p-1 ml-3" value={(formData.repeatedData.endsOn || dayjs()).format("YYYY-MM-DD")} onChange={handleChangeRepetitionEndsOn}/>*/}
                   </div>
                   <div className="ml-4">
-                    <input type="radio" value="endsAfter" name="repeated_type" onChange={handleChangeRepetitionOption}/>
+                    <input type="radio" value="endsAfter" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsAfter"}/>
                     <label className="ml-2">dopo</label>
-                    <input type="number" className="max-w-[45px] bg-green-800 pl-1 mx-3" value={repeatedData.endsAfter || 1} onChange={handleChangeRepetitionEndsAfter} min="1"/>
-                    <span>occorrenz{repeatedData.endsAfter > 1 ? 'e' : 'a'}</span>
+                    <input type="number" className="max-w-[45px] bg-green-700 hover:bg-green-800 pl-1 mt-2 rounded mx-3" value={formData.repeatedData.endsAfter || 1} onChange={handleChangeRepetitionEndsAfter} min="1"/>
+                    <span>occorrenz{formData.repeatedData.endsAfter > 1 ? 'e' : 'a'}</span>
                   </div>
               </fieldset>
             </div>

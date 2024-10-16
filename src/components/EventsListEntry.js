@@ -67,6 +67,22 @@ export default function EventsListEntry({ event })
     }
   }
 
+  const formatRepeatedEvery = (value) => {
+    if (value === "day") return "giorno"
+    if (value === "week") return "settimana"
+    if (value === "month") return "mese"
+    if (value === "year") return "anno"
+  }
+
+  const formatRepeatedEnds = (data) => {
+    console.log(data)
+    if (data.type === "endsAfter") {
+      return `dopo ${data.endsAfter} TODO, non funziona così`
+    }
+    else {
+      return dayjs(data.endsOn).format("dddd D MMMM YYYY")
+    }
+  }
 
   return (
   <>
@@ -102,7 +118,13 @@ export default function EventsListEntry({ event })
             <li>Creato il {dayjs(event.createdAt).format("D MMMM YYYY")} alle {dayjs(event.createdAt).format("hh:mm")}</li>
             <li>Modificato il {dayjs(event.updatedAt).format("D MMMM YYYY")} alle {dayjs(event.updatedAt).format("hh:mm")}</li>
             {/* TODO qui sarebbe carino mettere le informazioni di ripetizione */}
-            <li className="">Ripetuto: {!event.repeated ? "No" : "Sì"}</li>
+            {event.repeated ? <>
+                <li>Si ripete ogni {formatRepeatedEvery(event.repeatedData.every)}</li>
+                <li>Finisce {formatRepeatedEnds(event.repeatedData)}</li>
+              </>
+              :
+              <li>Non si ripete</li>
+            }            
           </ul>
         </div>
         :

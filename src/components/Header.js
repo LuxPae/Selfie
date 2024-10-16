@@ -27,7 +27,7 @@ export default function Header() {
   return (
     <>
     {/* TODO renderla responsive, no dropdown, ma flex fatto bene */}
-    <nav className="">
+    <nav className="flex justify-center">
       <div className="max-w-fit flex space-x-4 justify-items-start justify-start px-2 border rounded border-green-600">
         <Link to="/home" className="flex items-start space-x-3">
             <img src={user?.picture || "https://img.freepik.com/premium-photo/sloth-touches-camera-taking-selfie-funny-selfie-portrait-animal_323015-1968.jpg?w=360"} className="rounded-full h-8 bg-gray-50" alt="Selfie logo" />

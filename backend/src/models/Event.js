@@ -50,8 +50,8 @@ const eventSchema = new mongoose.Schema({
     default: false
   },
   repeatedData: {
-    every: { type: String, required: false },
-    type: { type: String, required: false },
+    every: { type: String, required: false, default: "week" },
+    type: { type: String, required: false, default: "endsAfter" },
     endsOn: { type: Number, default: dayjs().valueOf() },
     endsAfter: { type: Number, default: 1}
   }

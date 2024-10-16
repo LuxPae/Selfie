@@ -64,7 +64,8 @@ export default function EventsList({ sendFilteredEvents }) {
   }
 
   const filterEvents = () => allFilters() ? todayEvents : todayEvents.filter((event, i) => filters[event.label])
-  const  filteredEvents = useMemo(filterEvents, [filters, todayEvents, allFilters])
+  const  filteredEvents = useMemo(filterEvents, [filters, todayEvents, allFilters, dispatchEvent])
+  const sortedEvents = filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
 
   const handleCheckboxChange = (filter_label) => {
     var updated_filters = {}
@@ -126,7 +127,7 @@ export default function EventsList({ sendFilteredEvents }) {
           <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
             { todayEvents.length > 0 ?
               <ul>
-                { filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf()).map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
+                { sortedEvents.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
               </ul>
               :
               <p className="flex justify-center self-center text-xl mt-4">{"Non ci sono eventi per oggi."}</p>

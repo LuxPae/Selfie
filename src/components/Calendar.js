@@ -31,7 +31,7 @@ const Calendar = () => {
     getAllEvents(user)
       .then(events => dispatchEvent({ type: "ALL", payload: events }))
       .catch(error => console.error(error.message))
-  }, [])
+  }, [dispatchEvent])
 
   const year = currentDate.year();
   const month = currentDate.month();
