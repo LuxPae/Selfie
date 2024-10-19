@@ -55,7 +55,7 @@ export const deleteUser = async (user) => {
       `${PROFILE_API_URL}/${user._id}`,
       { headers: { Authorization: `Bearer ${user.token}` }}
     );
-    if (res.status !== 204) throw new Error("Could not delete user", user._id);
+    if (res.status !== 200) throw new Error("Could not delete user", user._id);
     else return true;
   }
   catch (error) {

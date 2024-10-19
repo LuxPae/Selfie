@@ -26,11 +26,12 @@ const labelsBG = {
   blue: "bg-blue-600"
 }
 
+//TODO c'è un qualche processo mutuale che fa richiamare all'infinito getAllEvents, lo devo stanare
 export default function EventsList({ sendFilteredEvents }) {
 
   var { user, allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
 
-  const  todayEvents = useMemo(() => allEvents.filter(e => selectedDay.date() === dayjs(e.date).date()), [selectedDay, allEvents, dispatchEvent]);
+  const  todayEvents = useMemo(() => allEvents.filter(e => selectedDay.date() === dayjs(e.begin).date()), [selectedDay]);
 
   const [ showFilters, setShowFilters ] = useState(false)
   const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
@@ -44,6 +45,12 @@ export default function EventsList({ sendFilteredEvents }) {
 
   const filterAllEvents = () => allFilters() ? allEvents : allEvents.filter((event, i) => filters[event.label]);
   const [allFilteredEvents, setAllFilteredEvents] = useState(filterAllEvents());
+
+  const [showEventsOrTasks, setShowEventsOrTasks] = useState("tutto");
+  const changeEvetsOrTasks = (e) => {
+    console.log(e.target.value);
+    setShowEventsOrTasks(e.target.value);
+  }
 
   useEffect(() => {
     const newAllFillteredEvents = filterAllEvents();
@@ -64,8 +71,9 @@ export default function EventsList({ sendFilteredEvents }) {
   }
 
   const filterEvents = () => allFilters() ? todayEvents : todayEvents.filter((event, i) => filters[event.label])
-  const  filteredEvents = useMemo(filterEvents, [filters, todayEvents, allFilters, dispatchEvent])
-  const sortedEvents = filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
+  const filteredEvents = useMemo(filterEvents, [filters, allFilters])
+  const sortEvents = () => filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
+  const sortedEvents = useMemo(sortEvents, [filteredEvents])
 
   const handleCheckboxChange = (filter_label) => {
     var updated_filters = {}
@@ -99,7 +107,9 @@ export default function EventsList({ sendFilteredEvents }) {
             </div>
           </header>
           <div className="border-b flex justify-end">
-            <div className="mt-2 mx-8">
+            <div className="flex justify-between space-x-auto mt-2 mx-8">
+              <p>TODO: filtro per "tutti", "eventi" e "attività", con select (dall'altro lato, ma non vuole saperne di andarsene)</p>
+              <>
               { !showFilters ?
                 <>
                 <span onClick={() => setShowFilters(true)} className="hover:cursor-pointer material-symbols-outlined">filter_alt</span>
@@ -122,6 +132,7 @@ export default function EventsList({ sendFilteredEvents }) {
                 <span onClick={handleFiltersOff} className="hover:cursor-pointer material-symbols-outlined">filter_alt_off</span>
                 </>
               }
+              </>
             </div>
           </div>
           <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">

@@ -79,7 +79,7 @@ const Profile = () => {
         `http://localhost:5000/user/profile/${id}`,
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      if (res.status === 204) { console.log("deleted") }
+      if (res.status === 200) { console.log("deleted") }
       else throw new Error("Could not delete user", id);
     }
     catch (error) {

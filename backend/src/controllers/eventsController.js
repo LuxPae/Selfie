@@ -13,28 +13,40 @@ exports.getAllEvents = async (req, res) => {
   }
 }
 
-exports.getEventById = async (req, res) => {
-  console.log("\nFetching calendar event", req.params.event_id);
-  try {
-    const event = await Event.find({ _id: req.params.event_id });
-    if (!event) throw new Error("Event not found");
-    res.status(200).json(events);
-    console.log("> Success");
-  } catch (err) {
-    console.log("x Error");
-    res.status(500).json({ message: err.message+" could not fetch event" });
-  }
-}
+//exports.getEventById = async (req, res) => {
+//  console.log("\nFetching calendar event", req.params.event_id);
+//  try {
+//    const event = await Event.find({ _id: req.params.event_id });
+//    if (!event) throw new Error("Event not found");
+//    res.status(200).json(events);
+//    console.log("> Success");
+//  } catch (err) {
+//    console.log("x Error");
+//    res.status(500).json({ message: err.message+" could not fetch event" });
+//  }
+//}
 
-exports.getEventsByLabel = async (req, res) => {
-  console.log("\nFetching events by label:", req.params.label);
+//exports.getEventsByLabel = async (req, res) => {
+//  console.log("\nFetching events by label:", req.params.label);
+//  try {
+//    const events = await Event.find({ userID: req.params.user_id, label: req.params.label });
+//    res.status(200).json(events);
+//    console.log("> Success");
+//  } catch (err) {
+//    console.log("x Error");
+//    res.status(500).json({ message: err.message+" could not fetch events" });
+//  }
+//}
+
+exports.getEventsByRepId = async (req, res) => {
+  console.log("\nFetching events by rep_id", req.params.rep_id);
   try {
-    const events = await Event.find({ userID: req.params.user_id, label: req.params.label });
+    const events = await Event.find({ "repeatedData.rep_id": req.params.rep_id });
     res.status(200).json(events);
     console.log("> Success");
   } catch (err) {
     console.log("x Error");
-    res.status(500).json({ message: err.message+" could not fetch events" });
+    res.status(500).json({ message: err.message+" could not fetch events by rep_id"+req.params.rep_id });
   }
 }
 
@@ -58,13 +70,13 @@ exports.createEvent = async (req, res) => {
 exports.modifyEvent = async (req, res) => {
   console.log("\nModifying event", req.params.event_id);
   try {
-    const modified_event = req.body.modified_event;
-    const new_event = await Event.findOneAndUpdate({ _id: modified_event._id }, {...modified_event});
+    const event_to_modify = req.body.event_to_modify;
+    const new_event = await Event.findOneAndUpdate({ _id: event_to_modify._id }, { ...event_to_modify });
     if (!new_event) throw new Error("x Event could not be modified")
     const saved_event = await new_event.save();
     if (!saved_event) throw new Error("x Event could not be modified")
     console.log("> Event modified")
-    res.status(200).json(modified_event);
+    res.status(200).json(saved_event);
   }
   catch (error) {
     console.error(error.message);
@@ -73,15 +85,18 @@ exports.modifyEvent = async (req, res) => {
 }
 
 exports.deleteEvent = async (req, res) => {
-  const id = req.params.event_id;
-  console.log("\nDeleting event", id);
+  const _id = req.params.event_id;
+  console.log("\nDeleting event", _id);
   try {
-    const result = await Event.findByIdAndDelete(id); 
-    if (result) {
+    const result = await Event.deleteMany({ _id }); 
+    if (result.acknowledged) {
       console.log("> Event deleted");
-      res.status(204);
+      res.status(200).send("ok");
     }
-    else throw new Error("x Event does not exist")
+    else {
+      throw new Error("x Event does not exist")
+      res.status(500).json({ message: "Server error" })
+    }
   }
   catch (error) {
     console.error(error.message);

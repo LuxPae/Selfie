@@ -72,6 +72,8 @@ export default function ContextWrapper({ children })
     setTimeout(() => setShowNotification(false), 5000);
   }
 
+  const [modifyRepeated, setModifyRepeated] = useState(false);
+
   return (
     <GlobalContext.Provider value={{
       user,
@@ -106,6 +108,9 @@ export default function ContextWrapper({ children })
       showNotification,
       setShowNotification,
       notify,
+
+      modifyRepeated,
+      setModifyRepeated
     }}>
       {children}
     </GlobalContext.Provider>

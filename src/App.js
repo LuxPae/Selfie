@@ -24,6 +24,8 @@ import Register from "./components/Register.js";
 import Profile from "./components/Profile.js";
 import Calendar from "./components/Calendar";
 
+import Prova from "./components/Prova.js"
+
 // Imposta la lingua della data in italiano
 import dayjs from "dayjs"
 import "dayjs/locale/it"
@@ -46,6 +48,8 @@ const App = () => {
         <Route path="/calendar" element={<Calendar/>}/>
         <Route path="/notes" element={<></>} />
         <Route path="/pomodoro" element={<></>}/>
+
+        <Route path="/prova" element={<Prova/>}/>
       </Routes>
     </Router>
     </>

@@ -80,7 +80,7 @@ exports.deleteUser = async (req, res) => {
     if (user) {
       await User.deleteOne({ email: user.email });
       console.log("> User deleted");
-      res.status(204);
+      res.status(200).send("ok");
     }
     else throw new Error("x User does not exist")
   }

@@ -31,7 +31,8 @@ const Calendar = () => {
     getAllEvents(user)
       .then(events => dispatchEvent({ type: "ALL", payload: events }))
       .catch(error => console.error(error.message))
-  }, [dispatchEvent])
+    console.log("getting all events")
+  }, [])
 
   const year = currentDate.year();
   const month = currentDate.month();
@@ -148,7 +149,7 @@ const Calendar = () => {
       </div>
       <div className="grid grid-cols-7 gap-1 text-lg text-center">
         {daysOfWeek.map((day, index) => <div key={index} className="font-semibold">{day}</div> )}
-        {days.map((day_date, index) => <DayTile key={index} day_date={day_date} events={filteredEvents.filter(e => dayjs(e.date).startOf("day").isSame(day_date.startOf("day")))} index={index} last_day_of_month={days.length-trailingDays} height={day_tile_height()}/>)}
+        {days.map((day_date, index) => <DayTile key={index} day_date={day_date} events={filteredEvents.filter(e => dayjs(e.begin).startOf("day").isSame(day_date.startOf("day")))} index={index} last_day_of_month={days.length-trailingDays} height={day_tile_height()}/>)}
       </div>
     </div>
   </div>

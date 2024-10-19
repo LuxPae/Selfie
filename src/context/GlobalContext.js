@@ -36,6 +36,8 @@ const GlobalContext = React.createContext({
   setShowNotification: (new_state) => {},
   notify: (type, message) => {},
 
+  modifyRepeated: false,
+  setModifyRepeated: (new_state) => {},
 });
 
 export default GlobalContext;

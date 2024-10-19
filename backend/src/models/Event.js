@@ -20,20 +20,10 @@ const eventSchema = new mongoose.Schema({
     required: false,
     default: "white"
   },
-  date: {
-    type: Number,
-    required: true,
-    default: dayjs().valueOf()
-  },
   allDay: {
     type: Boolean,
     required: true,
     default: false,
-  },
-  duration: {
-    type: Number,
-    required: true,
-    default: 1,
   },
   begin: { 
     type: Number, 
@@ -50,8 +40,9 @@ const eventSchema = new mongoose.Schema({
     default: false
   },
   repeatedData: {
-    every: { type: String, required: false, default: "week" },
-    type: { type: String, required: false, default: "endsAfter" },
+    rep_id: String,
+    every: { type: String, default: "week" },
+    type: { type: String, default: "endsAfter" },
     endsOn: { type: Number, default: dayjs().valueOf() },
     endsAfter: { type: Number, default: 1}
   }
