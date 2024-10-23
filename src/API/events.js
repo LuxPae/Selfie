@@ -48,8 +48,7 @@ export const createEvent = async(event, user) => {
         alert("create repeated event endsOn TODO")
       } else {
         const initial_rep_num = event.repeatedData.endsAfter;
-        //for (let i = initial_rep_num; i > 0; i--) {
-        for (let i = 1; i < initial_rep_num; i++) {
+        for (let i = 1; i <= initial_rep_num; i++) {
           const begin = dayjs(event.begin).add(i-1, event.repeatedData.every)
           const end = dayjs(event.end).add(i-1, event.repeatedData.every)
           const rep_event = {
@@ -58,7 +57,7 @@ export const createEvent = async(event, user) => {
             end: end.valueOf(),
             repeatedData: {
               ...event.repeatedData,
-              endsAfter: i
+              endsAfter: initial_rep_num-i+1
             }
           }
           console.log("creating event that ends after "+i+" occurrences", rep_event)

@@ -38,6 +38,15 @@ const GlobalContext = React.createContext({
 
   modifyRepeated: false,
   setModifyRepeated: (new_state) => {},
+
+  filters: null,
+  setFilters: (new_filters) => {},
+
+  shownCalendarType: "",
+  setShownCalendarType: (new_state) => {},
+
+  showCompletedTasks: false,
+  setShowCompletedTasks: (new_state) => {},
 });
 
 export default GlobalContext;

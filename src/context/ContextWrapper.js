@@ -72,7 +72,13 @@ export default function ContextWrapper({ children })
     setTimeout(() => setShowNotification(false), 5000);
   }
 
-  const [modifyRepeated, setModifyRepeated] = useState(false);
+  const [ modifyRepeated, setModifyRepeated] = useState(false);
+
+  const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
+
+  const [ shownCalendarType, setShownCalendarType ] = useState("tutti");
+
+  const [ showCompletedTasks, setShowCompletedTasks ] = useState(false)
 
   return (
     <GlobalContext.Provider value={{
@@ -110,7 +116,16 @@ export default function ContextWrapper({ children })
       notify,
 
       modifyRepeated,
-      setModifyRepeated
+      setModifyRepeated,
+
+      filters,
+      setFilters,
+
+      shownCalendarType,
+      setShownCalendarType,
+
+      showCompletedTasks,
+      setShowCompletedTasks
     }}>
       {children}
     </GlobalContext.Provider>

@@ -2,6 +2,7 @@ import GlobalContext from "../context/GlobalContext.js"
 import { useContext, useEffect } from "react"
 import DayTileEvent from "../components/DayTileEvent.js"
 import dayjs from "dayjs"
+import * as colors from "../scripts/COLORS.js"
 
 export default function DayTile({ day_date, index, height, last_day_of_month, events })
 {
@@ -34,9 +35,9 @@ export default function DayTile({ day_date, index, height, last_day_of_month, ev
     isInCurrentMonth(day_date) ?
     (
       (isDaySelected(day_date)) ? 
-      "text-white border-white border-2 bg-green-900 active:bg-green-900"
+      `text-white ${colors.MAIN_BORDER_LIGHT} border-2 ${colors.CALENDAR_BG_DARK} ${colors.CALENDAR_ACTIVE_BG_DARK}`
       :
-      "bg-green-100 text-black hover:bg-green-700 focus:bg-green-700"
+      `${colors.MAIN_BG_LIGHT} text-black ${colors.CALENDAR_HOVER_BG_DARK} ${colors.CALENDAR_FOCUS_BG_DARK}`
     )
     :
     (
@@ -49,15 +50,14 @@ export default function DayTile({ day_date, index, height, last_day_of_month, ev
 
   const handleClick = (clicked_event) => {
     setShowEventsList(true);
-    setShowEventModal(true);
-    setSelectedEvent(clicked_event);
+    //setShowEventModal(true);
+    //setSelectedEvent(clicked_event);
   }
 
-  //TODO dato che il border-white c'è sempre non ha senso metterlo in hover e focus, lol
   return (
     <>
     <div style={{ height }} onClick={() => setSelectedDay(day_date)} tabIndex="0"
-        className={`border-2 border-white ${css()} h-16 flex flex-col justify-start px-1 rounded-lg hover:border-white focus:border-2 focus:border-white hover:border-2 focus:text-white hover:text-white`}
+        className={`border-2 border-white ${css()} h-16 flex flex-col justify-start px-1 rounded-lg focus:border-2 hover:border-2 focus:text-white hover:text-white`}
     >
       <div className="flex justify-between">
           {day_date.date()}

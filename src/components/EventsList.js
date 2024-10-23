@@ -1,40 +1,22 @@
-//TODO
-// - se l'evento è ripetuto, nel cancellarlo si può scegliere se cancellare solo quello selezionato o tutti quelli ripetuti
-// - sistemare come vengono mostrati nella lista gli eventi (con tutte le informazioni)
+// [TODO]
+// - possibilità di completare le task dal calendario
 import React, { useMemo, useEffect, useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import EventsListEntry from "../components/EventsListEntry.js"
+import { labelsNames, labelsAccent, labelsBackground } from "../scripts/COLORS.js"
 import dayjs from "dayjs"
+import * as colors from "../scripts/COLORS.js"
 
-const labels = ["white", "red", "orange", "yellow", "green", "cyan", "blue"]
-const labelsAccent = {
-  white: "accent-white",
-  red: "accent-red-600",
-  orange: "accent-orange-500",
-  yellow: "accent-yellow-400",
-  green: "accent-green-500",
-  cyan: "accent-cyan-400",
-  blue: "accent-blue-600"
-}
-const labelsBG = {
-  white: "bg-white",
-  red: "bg-red-600",
-  orange: "bg-orange-500",
-  yellow: "bg-yellow-400",
-  green: "bg-green-500",
-  cyan: "bg-cyan-400",
-  blue: "bg-blue-600"
-}
+export default function EventsList({ events }) {
 
-//TODO c'è un qualche processo mutuale che fa richiamare all'infinito getAllEvents, lo devo stanare
-export default function EventsList({ sendFilteredEvents }) {
-
-  var { user, allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent } = useContext(GlobalContext);
-
-  const  todayEvents = useMemo(() => allEvents.filter(e => selectedDay.date() === dayjs(e.begin).date()), [selectedDay]);
+  var { user, allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent, filters, setFilters, shownCalendarType, setShownCalendarType, showCompletedTasks, setShowCompletedTasks } = useContext(GlobalContext);
 
   const [ showFilters, setShowFilters ] = useState(false)
-  const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
+
+  const handleChangeCalendarType = (e) => {
+    console.log(e.target.value);
+    setShownCalendarType(e.target.value);
+  }
 
   const allFilters = () => {
     for (let label of Object.keys(filters)) {
@@ -43,23 +25,11 @@ export default function EventsList({ sendFilteredEvents }) {
     return true;
   }
 
-  const filterAllEvents = () => allFilters() ? allEvents : allEvents.filter((event, i) => filters[event.label]);
-  const [allFilteredEvents, setAllFilteredEvents] = useState(filterAllEvents());
-
-  const [showEventsOrTasks, setShowEventsOrTasks] = useState("tutto");
-  const changeEvetsOrTasks = (e) => {
-    console.log(e.target.value);
-    setShowEventsOrTasks(e.target.value);
-  }
-
   useEffect(() => {
-    const newAllFillteredEvents = filterAllEvents();
-    setAllFilteredEvents(newAllFillteredEvents);
-    sendFilteredEvents(newAllFillteredEvents);
-    return () => sendFilteredEvents(allEvents);
-  }, [filters, allEvents, showFilters])
+   if (!allFilters()) setShowFilters(true) 
+  }, [])
 
-  const handleFiltersOff = () => {
+  const handleResetFilters = () => {
     setShowFilters(false);
     const resetted_filters = { white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true };
     setFilters(resetted_filters);
@@ -70,10 +40,6 @@ export default function EventsList({ sendFilteredEvents }) {
     setFilters(cleared_filters);
   }
 
-  const filterEvents = () => allFilters() ? todayEvents : todayEvents.filter((event, i) => filters[event.label])
-  const filteredEvents = useMemo(filterEvents, [filters, allFilters])
-  const sortEvents = () => filteredEvents.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
-  const sortedEvents = useMemo(sortEvents, [filteredEvents])
 
   const handleCheckboxChange = (filter_label) => {
     var updated_filters = {}
@@ -85,10 +51,10 @@ export default function EventsList({ sendFilteredEvents }) {
 
   return (
     <>
-    <div className="w-full h-full mt-8">
+    <div className="w-full max-w-sm h-full mt-8">
       <div className="flex justify-right items-right">
-        <form className="bg-green-900 rounded-lg">
-          <header className="border-b bg-green-900">
+        <form className={`${colors.CALENDAR_BG_MEDIUM} rounded-lg`}>
+          <header className={`border-b ${colors.CALENDAR_BG_MEDIUM}`}>
             <div className="pb-2 text-center items-center flex space-x-4 justify-between items-center mx-4 mt-2">
               { !showEventModal && <button
                 onClick={() => { setShowEventModal(true); setSelectedEvent(null) }}
@@ -106,42 +72,56 @@ export default function EventsList({ sendFilteredEvents }) {
               </button>
             </div>
           </header>
-          <div className="border-b flex justify-end">
-            <div className="flex justify-between space-x-auto mt-2 mx-8">
-              <p>TODO: filtro per "tutti", "eventi" e "attività", con select (dall'altro lato, ma non vuole saperne di andarsene)</p>
-              <>
-              { !showFilters ?
+          <div className="border-b px-2 mt-2 flex justify-between">
+            <div className="flex items-center space-x-2">
+              <select className="rounded" defaultValue={shownCalendarType} onChange={handleChangeCalendarType}>
+                <option value="tutti">Mostra</option>
+                <option value="tutti">Tutti</option>
+                <option value="eventi">Eventi</option>
+                <option value="attività">Attività</option>
+              </select>
+              { shownCalendarType !== "eventi" ?
                 <>
-                <span onClick={() => setShowFilters(true)} className="hover:cursor-pointer material-symbols-outlined">filter_alt</span>
+                <input type="checkbox" value={showCompletedTasks} onChange={(e) => setShowCompletedTasks(e.target.checked)}/>
                 </>
                 :
                 <>
-                <span title="togli tutti" className="hover:cursor-pointer material-symbols-outlined" onClick={handleClearFilters}>clear_all</span>
-                <span className="mx-4 inline-flex space-x-4">
-                  {labels.map((label, i) => (
-                    <div key={i} className={`${!filters[label] ? labelsBG[label] : ""}`}>
+                </>
+              }
+            </div>
+            <div className="">
+              { !showFilters ?
+                <span onClick={() => setShowFilters(true)} className="cursor-pointer material-symbols-outlined">filter_alt</span>
+                :
+                <>
+                <span title="togli tutti" className="cursor-pointer material-symbols-outlined" onClick={handleClearFilters}>clear_all</span>
+                <span className="mx-3 inline-flex space-x-2">
+                  {labelsNames.map((label, i) => (
+                    <div key={i} className={`${!filters[label] ? labelsBackground[label] : ""}`}>
                       <input
                         type="checkbox"
                         checked={filters[label]}
                         onChange={() => handleCheckboxChange(label)}
-                        className={`w-6 h-6 ${labelsAccent[label]} hover:cursor-pointer`}
+                        className={`w-5 h-5 ${labelsAccent[label]} cursor-pointer`}
                       />
                     </div>
                     ))}
                 </span>
-                <span onClick={handleFiltersOff} className="hover:cursor-pointer material-symbols-outlined">filter_alt_off</span>
+                <span onClick={handleResetFilters} className="cursor-pointer material-symbols-outlined">filter_alt_off</span>
                 </>
               }
-              </>
             </div>
           </div>
-          <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
-            { todayEvents.length > 0 ?
+          <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] max-w-full mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
+            { events.length > 0 ?
               <ul>
-                { sortedEvents.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
+                { events.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
               </ul>
               :
-              <p className="flex justify-center self-center text-xl mt-4">{"Non ci sono eventi per oggi."}</p>
+              <>
+              { /* TODO: in base a qual è il shownCalendarType cambia la frase */}
+              <p className="flex justify-center self-center text-xl mt-4">{"Non ci sono eventi o attività per oggi."}</p>
+              </>
             }
           </div>
         </form>

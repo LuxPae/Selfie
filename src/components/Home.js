@@ -1,6 +1,6 @@
 // TODO
 // - tiny scrollbars for notes and events
-
+import * as colors from "../scripts/COLORS.js"
 import { useEffect } from "react"
 import { getAllEvents } from "../API/events.js"
 import { useNavigate } from "react-router-dom"
@@ -73,7 +73,7 @@ const HomeVanilla = () => {
   const max_notes = 3;
   const NoteTemplate = (note) => {
     return (
-  `<div id="note_${note._id}" class="hover:animate-pulse bg-gradient-to-b hover:bg-gradient-to-t from-green-900 to-green-950 p-4 rounded-lg border border-green-900 mb-4">
+  `<div id="note_${note._id}" class="hover:animate-pulse bg-gradient-to-b hover:bg-gradient-to-t ${colors.HOME_GRADIENT_1} ${colors.HOME_GRADIENT_2} p-4 rounded-lg border ${colors.MAIN_BORDER_DARK} mb-4">
     <div class="flex flex-row justify-between">
       <h2 class="text-left text-xl font-semibold mb-2">${note.title}</h2>
       <div>
@@ -87,7 +87,7 @@ const HomeVanilla = () => {
   
   const EventTemplate = (event) => {
     return (
-  `<div id="event_${event._id}" class="bg-gradient-to-l border-green-900 border from-green-900 to-green-950 hover:bg-gradient-to-r p-6 rounded-lg mb-6 hover:animate-pulse">
+  `<div id="event_${event._id}" class="bg-gradient-to-l ${colors.MAIN_BORDER_DARK} border ${colors.HOME_GRADIENT_1} ${colors.HOME_GRADIENT_2} hover:bg-gradient-to-r p-6 rounded-lg mb-6 hover:animate-pulse">
     <h2 class="text-2xl font-semibold mb-2">${event.title}</h2>
     <p class="text-gray-300 mb-4">${event.description}</p>
     
@@ -150,11 +150,11 @@ const HomeVanilla = () => {
     <>
     <div className="flex items-center text-center justify-center h-full">
       <div className="flex mt-10">
-        <div id="notes_container" className="border-2 border-green-700 rounded-md text-white p-6 basis-1/2 m-2">
+        <div id="notes_container" className={`border-2 ${colors.MAIN_BORDER_LIGHT} rounded-md text-white p-6 basis-1/2 m-2`}>
           <h1 className="text-3xl font-bold text-center mb-6">Le mie note</h1>
           <div id="notes"></div>
         </div>
-        <div id="events_container" className="border-2 border-green-700 rounded-md text-white p-6 basis-1/2 m-2">
+        <div id="events_container" className={`border-2 ${colors.MAIN_BORDER_LIGHT} rounded-md text-white p-6 basis-1/2 m-2`}>
           <h1 className="text-3xl font-bold text-center mb-6">Eventi prossimi</h1>
           <div id="events"></div>
       </div>

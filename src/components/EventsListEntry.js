@@ -1,30 +1,21 @@
-//TODO 
-// - quando si elimina un evento chiede se eliminare anche tutti quelli ripetuti
+// [TODO]
+// - non mi piace che dispatchEvent sia sostanzialmente inutile, perché alla fine li prendo sempre con ALL
+// - eventsList troppo grande in larghezza
+// - no translate
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext, useEffect } from "react"
-import { getAllEvents, getEventsByRepId, deleteEvents } from "../API/events.js"
+import { getAllEvents, getEventsByRepId, deleteEvents, modifyEvent } from "../API/events.js"
+import { labelsText, labelsBorder, labelsAccent, labelsBackground, titleColor } from "../scripts/COLORS.js"
 import dayjs from "dayjs"
+
 
 export default function EventsListEntry({ event })
 {
-  var { user, notify, allEvents, dispatchEvent, selectedEvent, setSelectedEvent, setShowEventModal, setModifyRepeated } = useContext(GlobalContext)
+  var { user, notify, selectedDay, allEvents, dispatchEvent, selectedEvent, setSelectedEvent, setShowEventModal, setModifyRepeated } = useContext(GlobalContext)
 
   useEffect(() => {
-    getAllEvents(user)
-      .then(events => dispatchEvent({ type: "ALL", payload: events }))
-      .catch(error => console.error(error.message))
-    console.log("getting all events")
-  }, [handleDelete])
-
-  const labelsColour = {
-    white: "border-white",
-    red: "border-red-600",
-    orange: "border-orange-500",
-    yellow: "border-yellow-400",
-    green: "border-green-500",
-    cyan: "border-cyan-400",
-    blue: "border-blue-600"
-  }
+    setShowMore(false)
+  }, [selectedDay])
 
   const time_span = () => {
     if (dayjs(event.begin).isSame(dayjs(event.end))) return dayjs(event.begin).format("HH:mm") 
@@ -66,8 +57,11 @@ export default function EventsListEntry({ event })
     setShowEventModal(true)
   }
 
-  //TODO forse il problema sta in una mancaza di refreshing in allEvents o in uno degli altri, forse dovrei mettere tutti con useMemo???
   async function handleDelete(deleteAllRepeatedEvents) {
+    const type = event.isTask ? "attività" : "evento"
+    const types = event.isTask ? "attività" : "eventi"
+    const type_art = event.isTask ? "l'attività" : "l'evento"
+    const types_art = event.isTask ? "le attività" : "gli eventi"
     var events = [];
     try {
       if (event.repeated && deleteAllRepeatedEvents) {
@@ -75,16 +69,22 @@ export default function EventsListEntry({ event })
       } else events.push(event)
       setDeletingEvents({ count: events.length });
       const done = await deleteEvents(events, user);
-      if (!done) throw new Error("Non è stato possibile eliminare gli/l'eventi/o, errore nel server")
+      if (!done) {
+        if (deleteAllRepeatedEvents) throw new Error(`Non è stato possibile eliminare ${type_art}, errore nel server`)
+        else throw new Error(`Non è stato possibile eliminare ${types_art}, errore nel server`)
+      }
       setConfirmDelete(false);
       setDeletingEvents(null);
-      notify("Calendario", "evento eliminato")
+      if (deleteAllRepeatedEvents) notify("Calendario", `${events.length} ${types} eliminat${event.isTask ? "e" : "i"}`)
+      else notify("Calendario", `${type} eliminat${event.isTask ? "a" : "o"}`)
       if (event === selectedEvent) {
         // TODO dipende da come voglio che funzioni
         //setShowEventModal(false);
         setSelectedEvent(null);
       }
       for (let e of events) dispatchEvent({ type: "DELETE", payload: e });
+      const all_events = await getAllEvents(user);
+      dispatchEvent({ type: "ALL", payload: all_events })
     } catch (error) {
       console.error('Error deleting event:', error);
       notify("error", error.message);
@@ -104,95 +104,128 @@ export default function EventsListEntry({ event })
   const formatRepeatedEnds = (data) => {
     if (data.type === "endsAfter") {
       if (data.endsAfter === 1) return "Finisce con questa occorrenza"
-      else return `Manca${data.endsAfter === 2 ? "" : "no"} ${data.endsAfter} occorrenz${data.endsAfter === 2 ? 'a' : 'e'}`
+      else return `Manca${data.endsAfter === 2 ? "" : "no"} ${data.endsAfter-1} occorrenz${data.endsAfter === 2 ? 'a' : 'e'}`
     }
     else return `Fino a ${dayjs(data.endsOn).format("dddd D MMMM YYYY")}`
   }
 
+  const handleCompleteTask = async (e) => {
+    try {
+      const modified_task = {
+        ...event,
+        isTask: { completed: e.target.checked }
+      }
+      const res = await modifyEvent(modified_task, user);
+      if (!res) throw new Error("Non è stato possibile modificare l'attività")
+      dispatchEvent({ type: "MODIFY", payload: modified_task})
+      if (!e.target.checked) notify("Calendario", "Attvitià completata")
+    } catch(error) {
+      console.error("Non è stato possibile modificare l'attività")
+      notify("error", error.message)
+    }
+  }
+
+  const completed = event.isTask?.completed;
+
   return (
   <>
-  <div className={`snap-center border-s-4 ${labelsColour[event.label]} mb-6 mr-4 flex flex-col max-w-full`}>
-    <div className="pl-2 mr-2">
-      <h2 className="text-center text-white text-xl font-semibold border-b">{event.title}</h2>
-      <div className="flex justify-between border-b mt-1">
-        <div className="text-left flex items-center pb-[4px]">
-          { event.allDay ?
-            <h1 className="text-xl font-bold">Tutto il giorno</h1>
-            :
-            <h1 className="text-xl font-bold">{time_span()}{duration()}</h1>
-          }
-        </div>
-        <div className="space-x-3 flex text-xs items-center hover:cursor-pointer">
-          { !confirmRepeatedModify ?
-            <div className="flex flex-col items-center" onClick={() => setConfirmRepeatedModify(true)}>
-              <span className="material-symbols-outlined">create</span>
-              <span>modifica</span>
-            </div>
-            :
-            <>
-            <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => setConfirmRepeatedModify(false)}>
-              <span className="material-symbols-outlined">edit_off</span>
-              <span>annulla</span>
-            </div>
-            <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => handleEdit(false)}>
-              <span className="material-symbols-outlined">pages</span>
-              { event.repeated ? <span>singolo</span> : <span>conferma</span> }
-            </div>
-            { event.repeated &&
-                <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => handleEdit(true)}>
-                  <span className="material-symbols-outlined">stack_star</span>
-                  <span>ripetuti</span>
-                </div>
-            }
-            </>
-          }
-          { !confirmDelete ?
-            <>
-            <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => setConfirmDelete(true)}>
-              <span className="material-symbols-outlined">delete</span>
-              <span>elimina</span>
-            </div>
-            </>
-            :
-            <>
-            <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => setConfirmDelete(false)}>
-              <span className="material-symbols-outlined">delete_forever</span>
-              <span>annulla</span>
-            </div>
-            <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => handleDelete(false)}>
-              <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count === 1) ? "animate-spin" : ""}`}>check</span>
-              { event.repeated ? <span>singolo</span> : <span>conferma</span> }
-            </div>
-            { event.repeated &&
-                <div className="flex flex-col items-center hover:cursor-pointer" onClick={() => handleDelete(true)}>
-                  <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count > 1) ? "animate-spin" : ""}`}>done_all</span>
-                  <span>ripetuti</span>
-                </div>
-            }
-            </>
-          }
-        </div>
+  <div className={`snap-center mb-6 flex flex-col max-w-full ${completed ? labelsText[event.label]+" opacity-50 hover:opacity-100" : "text-white"}`}>
+    <div className={`overflow-hidden rounded mr-4 border-2 ${completed ? "border-transparent" : labelsBorder[event.label] }`}>
+      <div className={`flex relative items-center ${completed ? "justify-start" : "justify-center "+labelsBackground[event.label]}`}>
+        { event.isTask && <>
+          <input type="checkbox" checked={event.isTask.completed} className={`rounded cursor-pointer absolute left-1 w-5 h-5 ${labelsAccent[event.label]}`} onChange={handleCompleteTask}/>
+        </>}
+        <h2 className={`text-center text-xl font-semibold ${completed ? "line-through ml-8" : titleColor[event.label]}`}>{event.title}</h2>
       </div>
-      { event.description && <p className="text-white text-base py-2 border-b">{event.description}</p>}
-      { showMore ?
-        <div>
-          <div onClick={() => setShowMore(false)} className="hover:cursor-pointer material-symbols-outlined">arrow_drop_down</div>
-          <ul className="ml-4 list-['🠒']">
-            {/* TODO devo ancora fare che quando si modifica cambia la data: l'ho fatto e non funziona, forse ho risolto, devo controllare*/}
-            <li>&nbsp;Creato il {dayjs(event.createdAt).format("D MMMM YYYY")} alle {dayjs(event.createdAt).format("hh:mm")}</li>
-            <li>&nbsp;Modificato il {dayjs(event.updatedAt).format("D MMMM YYYY")} alle {dayjs(event.updatedAt).format("hh:mm")}</li>
-            {event.repeated ? <>
-                <li>&nbsp;Si ripete ogni {formatRepeatedEvery(event.repeatedData.every)}</li>
-                <li>&nbsp;{formatRepeatedEnds(event.repeatedData)}</li>
+      { !(event.isTask && completed) && <div className="m-2">
+        <div className={`flex justify-between border-b mt-1`}>
+          <div className="text-left flex items-center pb-[4px]">
+            { event.allDay ?
+              <h1 className="text-xl font-bold">Tutto il giorno</h1>
+              :
+              <>
+              { event.isTask ?
+                <h1 className="text-xl font-bold">{dayjs(event.begin).format("HH:mm")}</h1>
+                :
+                <h1 className="text-xl font-bold">{time_span()}{duration()}</h1>
+              }
+              </>
+            }
+          </div>
+          <div className="space-x-3 flex text-xs items-center cursor-pointer">
+            { !confirmRepeatedModify ?
+              <div className="flex flex-col items-center" onClick={() => setConfirmRepeatedModify(true)}>
+                <span className="material-symbols-outlined">create</span>
+                <span>modifica</span>
+              </div>
+              :
+              <>
+              <div className="flex flex-col items-center cursor-pointer" onClick={() => setConfirmRepeatedModify(false)}>
+                <span className="material-symbols-outlined">edit_off</span>
+                <span>annulla</span>
+              </div>
+              <div className="flex flex-col items-center cursor-pointer" onClick={() => handleEdit(false)}>
+                <span className="material-symbols-outlined">pages</span>
+                { event.repeated ? <span>singol{event.isTask ? "a" : "o"}</span> : <span>conferma</span> }
+              </div>
+              { event.repeated &&
+                  <div className="flex flex-col items-center cursor-pointer" onClick={() => handleEdit(true)}>
+                    <span className="material-symbols-outlined">stack_star</span>
+                    <span>ripetut{event.isTask ? "e" : "i"}</span>
+                  </div>
+              }
+              </>
+            }
+            { !confirmDelete ?
+              <>
+              <div className="flex flex-col items-center cursor-pointer" onClick={() => setConfirmDelete(true)}>
+                <span className="material-symbols-outlined">delete</span>
+                <span>elimina</span>
+              </div>
               </>
               :
-              <li>&nbsp;Non si ripete</li>
-            }            
-          </ul>
+              <>
+              <div className="flex flex-col items-center cursor-pointer" onClick={() => setConfirmDelete(false)}>
+                <span className="material-symbols-outlined">delete_forever</span>
+                <span>annulla</span>
+              </div>
+              <div className="flex flex-col items-center cursor-pointer" onClick={() => handleDelete(false)}>
+                <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count === 1) ? "animate-spin" : ""}`}>check</span>
+                { event.repeated ? <span>singol{event.isTask ? "a" : "o"}</span> : <span>conferma</span> }
+              </div>
+              { event.repeated &&
+                  <div className="flex flex-col items-center cursor-pointer" onClick={() => handleDelete(true)}>
+                    <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count > 1) ? "animate-spin" : ""}`}>done_all</span>
+                    <span>ripetut{event.isTask ? "e" : "i"}</span>
+                  </div>
+              }
+              </>
+            }
+          </div>
         </div>
-        :
-        <div onClick={() => setShowMore(true)} className="hover:cursor-pointer material-symbols-outlined">arrow_right</div>
-      }
+        { event.description && <p className="text-base py-2 border-b">{event.description}</p>}
+        <div className="translate-y-1">
+          { showMore ?
+            <div>
+              <div onClick={() => setShowMore(false)} className="cursor-pointer material-symbols-outlined">arrow_drop_down</div>
+              <ul className="ml-4 list-['🠒']">
+                {/* TODO devo ancora fare che quando si modifica cambia la data: l'ho fatto e non funziona, forse ho risolto, devo controllare*/}
+                <li>&nbsp;Creat{event.isTask ? "a" : "o"} il {dayjs(event.createdAt).format("D MMMM YYYY")} alle {dayjs(event.createdAt).format("HH:mm")}</li>
+                { !dayjs(event.createdAt).isSame(dayjs(event.updatedAt)) && <li>&nbsp;Modificat{event.isTask ? "a" : "o"} il {dayjs(event.updatedAt).format("D MMMM YYYY")} alle {dayjs(event.updatedAt).format("HH:mm")}</li> }
+                {event.repeated ? <>
+                    <li>&nbsp;Si ripete ogni {formatRepeatedEvery(event.repeatedData.every)}</li>
+                    <li>&nbsp;{formatRepeatedEnds(event.repeatedData)}</li>
+                  </>
+                  :
+                  <li>&nbsp;Non si ripete</li>
+                }            
+              </ul>
+            </div>
+            :
+            <div onClick={() => setShowMore(true)} className="cursor-pointer material-symbols-outlined">arrow_right</div>
+          }
+        </div>
+      </div>}
     </div>
   </div>
   </>

@@ -180,8 +180,8 @@ const Profile = () => {
             { confirmDelete && <>
               <div className="text-white flex space-x-4">
                 <div>Conferma di voler eliminare il tuo account:</div>
-                <button className="hover:cursor-pointer hover:bg-red-700 border rounded border-red-700 px-4" onClick={handleDeleteUser}>Sì</button>
-                <button className="hover:cursor-pointer hover:bg-green-700 border rounded border-green-700 px-4" onClick={() => setConfirmDelete(false)}>No</button>
+                <button className="cursor-pointer hover:bg-red-700 border rounded border-red-700 px-4" onClick={handleDeleteUser}>Sì</button>
+                <button className="cursor-pointer hover:bg-green-700 border rounded border-green-700 px-4" onClick={() => setConfirmDelete(false)}>No</button>
               </div>
             </>}
           </div>

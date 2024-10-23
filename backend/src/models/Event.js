@@ -15,6 +15,14 @@ const eventSchema = new mongoose.Schema({
     type: String, 
     required: false 
   },
+  //isTask: {
+  //  type: Boolean,
+  //  required: true,
+  //  default: false
+  //},
+  isTask: {
+    completed: { type: Boolean, default: false },
+  },
   label: { 
     type: String, 
     required: false,
@@ -40,11 +48,11 @@ const eventSchema = new mongoose.Schema({
     default: false
   },
   repeatedData: {
-    rep_id: String,
+    rep_id: { type: String, required: true },
     every: { type: String, default: "week" },
     type: { type: String, default: "endsAfter" },
     endsOn: { type: Number, default: dayjs().valueOf() },
-    endsAfter: { type: Number, default: 1}
+    endsAfter: { type: Number, default: 2}
   }
 
 }, { timestamps: true });
