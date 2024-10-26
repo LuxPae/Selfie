@@ -1,17 +1,15 @@
 // [TODO]
-// - non mi piace che dispatchEvent sia sostanzialmente inutile, perché alla fine li prendo sempre con ALL
 // - eventsList troppo grande in larghezza
-// - no translate
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext, useEffect } from "react"
-import { getAllEvents, getEventsByRepId, deleteEvents, modifyEvent } from "../API/events.js"
+import { getEventsByRepId, deleteEvents, modifyEvent } from "../API/events.js"
 import { labelsText, labelsBorder, labelsAccent, labelsBackground, titleColor } from "../scripts/COLORS.js"
 import dayjs from "dayjs"
 
 
 export default function EventsListEntry({ event })
 {
-  var { user, notify, selectedDay, allEvents, dispatchEvent, selectedEvent, setSelectedEvent, setShowEventModal, setModifyRepeated } = useContext(GlobalContext)
+  var { user, notify, selectedDay, allEvents, allEvents_modifyEvents, allEvents_deleteEvents, selectedEvent, setSelectedEvent, setShowEventModal, setModifyRepeated } = useContext(GlobalContext)
 
   useEffect(() => {
     setShowMore(false)
@@ -75,6 +73,7 @@ export default function EventsListEntry({ event })
       }
       setConfirmDelete(false);
       setDeletingEvents(null);
+      allEvents_deleteEvents(events)
       if (deleteAllRepeatedEvents) notify("Calendario", `${events.length} ${types} eliminat${event.isTask ? "e" : "i"}`)
       else notify("Calendario", `${type} eliminat${event.isTask ? "a" : "o"}`)
       if (event === selectedEvent) {
@@ -82,9 +81,6 @@ export default function EventsListEntry({ event })
         //setShowEventModal(false);
         setSelectedEvent(null);
       }
-      for (let e of events) dispatchEvent({ type: "DELETE", payload: e });
-      const all_events = await getAllEvents(user);
-      dispatchEvent({ type: "ALL", payload: all_events })
     } catch (error) {
       console.error('Error deleting event:', error);
       notify("error", error.message);
@@ -117,7 +113,7 @@ export default function EventsListEntry({ event })
       }
       const res = await modifyEvent(modified_task, user);
       if (!res) throw new Error("Non è stato possibile modificare l'attività")
-      dispatchEvent({ type: "MODIFY", payload: modified_task})
+      allEvents_modifyEvents([modified_task])
       if (!e.target.checked) notify("Calendario", "Attvitià completata")
     } catch(error) {
       console.error("Non è stato possibile modificare l'attività")
@@ -152,7 +148,7 @@ export default function EventsListEntry({ event })
               </>
             }
           </div>
-          <div className="space-x-3 flex text-xs items-center cursor-pointer">
+          <div className="space-x-3 flex text-xs items-center cursor-pointer select-none">
             { !confirmRepeatedModify ?
               <div className="flex flex-col items-center" onClick={() => setConfirmRepeatedModify(true)}>
                 <span className="material-symbols-outlined">create</span>

@@ -1,6 +1,5 @@
 // [TODO]
 // - import / export as ICS ?
-// - quando si schiaccia sul mese si può scegliere (con i bottoni come nel modal) giorno, mese, anno oppure "oggi"
 
 import GlobalContext from "../context/GlobalContext.js"
 import { useEffect, useState, useContext, useMemo } from "react";
@@ -9,21 +8,42 @@ import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
 import DayTile from "../components/DayTile.js"
+import Button from "../components/Button.js"
 import { getAllEvents } from "../API/events.js"
 import useCheckForUser from "../hooks/useCheckForUser.js"
 import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
-
-const daysOfWeek = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+import { daysOfWeek, monthsNames } from "../scripts/CONSTANTS.js"
 
 const Calendar = () => {
 
   useCheckForUser();
 
-  var { user, currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, dispatchEvent, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
+  var { user, currentDate, setCurrentDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, allEvents_initialize, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
   const navigate = useNavigate();
 
-  const [selectingDay, setSelectingDay] = useState(false);
+  const [selectingNewDate, setSelectingNewDate] = useState(false)
+  const [selectingNewDay, setSelectingNewDay] = useState(false)
+  const [selectingNewMonth, setSelectingNewMonth] = useState(false)
+  const [selectingNewYear, setSelectingNewYear] = useState(false)
+  const [newDate, setNewDate ] = useState({ day:selectedDay.date(), month:selectedDay.month(), monthName:selectedDay.format("MMMM"), year:selectedDay.year()})
+  const handleChangeNewDate = (e) => {
+    var new_date = {
+      ...newDate,
+      [e.target.name]: e.target.value
+    }
+    if (e.target.name === "month") new_date.monthName = monthsNames[new_date.month]
+    setNewDate(new_date)
+    const date = dayjs({...new_date})
+    setSelectedDay(date)
+    setCurrentDate(date)
+  }
+  const handleConfirmNewDate = () => {
+    setSelectingNewDate(false)
+    const date = dayjs({...newDate})
+    setSelectedDay(date)
+    setCurrentDate(date)
+  }
 
   useEffect(() => {
     if(!user) navigate("/");
@@ -38,24 +58,16 @@ const Calendar = () => {
   })
   const filterCompletedTasks = (events) => showCompletedTasks ? events : events.filter((event) => !event.isTask || !event?.isTask.completed)
 
-  const allFilteredEvents = useMemo(() => filterEventsByLabel(allEvents), [allEvents, filters])
-  const allSortedEvents = useMemo(() => sortEvents(allFilteredEvents), [allFilteredEvents])
-  const allEventsByType = useMemo(() => filterEventsByType(allSortedEvents), [allSortedEvents, shownCalendarType])
-  const allEventsToDisplay = useMemo(() => filterCompletedTasks(allEventsByType), [allEventsByType, showCompletedTasks])
+  const allFilteredEvents = filterEventsByLabel(allEvents)
+  const allSortedEvents = sortEvents(allFilteredEvents)
+  const allEventsByType = filterEventsByType(allSortedEvents)
+  const allEventsToDisplay = filterCompletedTasks(allEventsByType)
 
-  // in realtà non ha senso fare tutto questo, basta farlo per tutti gli eventi e poi filtrare solo per il selectedDay
-  //const selectedDayEvents = useMemo(() => filterEventsByDate(selectedDay), [allEvents, selectedDay]);
-  //const selectedDayFilteredEvents = useMemo(() => filterEventsByLabel(selectedDayEvents), [selectedDayEvents, filters])
-  //const selectedDaySortedEvents = useMemo(() => sortEvents(selectedDayFilteredEvents), [selectedDayFilteredEvents])
-  //const selectedDayEventsByType = useMemo(() => filterEventsByType(selectedDaySortedEvents), [selectedDaySortedEvents])
-  //const selectedDayEventsToDisplay = useMemo(() => filterEventsByType(selectedDayEventsByType), [selectedDayEventsByType])
-  const selectedDayEventsToDisplay = useMemo(() => filterEventsByDate(allEventsToDisplay, selectedDay))
+  const selectedDayEventsToDisplay = filterEventsByDate(allEventsToDisplay, selectedDay)
 
   useEffect(() => {
-    getAllEvents(user)
-      .then(events => dispatchEvent({ type: "ALL", payload: events }))
-      .catch(error => console.error(error.message))
-  }, [])
+    allEvents_initialize()
+  }, [allEvents])
 
   const year = currentDate.year();
   const month = currentDate.month();
@@ -94,6 +106,7 @@ const Calendar = () => {
   const goToToday = () => {
     setCurrentDate(dayjs());
     setSelectedDay(dayjs());
+    setSelectingNewDate(false)
   }
 
   const MonthFormattedStringMMMM = (date) => {
@@ -166,14 +179,39 @@ const Calendar = () => {
       <div className="flex justify-between items-center mb-5">
         <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
         <div>
-          { selectingDay ? <>
-              <p>TODO</p>
-              <button onClick={goToToday}>Oggi</button>
-              <br/>
-              <button onClick={() => setSelectingDay(false)}>close</button>
-            </>
+          { selectingNewDate ? <div className="flex">
+              <button className="mr-3 material-symbols-outlined" onClick={handleConfirmNewDate}>check</button>
+              <div className="border-l p-1 pl-4 flex space-x-2 mr-4">
+                { selectingNewDay ? <>
+                  <select className={`rounded ${colors.BUTTON_BG}`} name="day" onChange={handleChangeNewDate} defaultValue={selectedDay.date()}>
+                    { Array.from({ length: daysInCurrentMonth }, (_, i) => i+1).map(day => <option key={day} value={day}>{day}</option>) }
+                  </select>
+                  </>
+                  :
+                  <Button click={() => setSelectingNewDay(true)} label={newDate.day}/> 
+                }
+                { selectingNewMonth ? <>
+                  <select className={`rounded ${colors.BUTTON_BG}`} name="month" onChange={handleChangeNewDate} defaultValue={selectedDay.month()}>
+                    { monthsNames.map((month, i) => <option key={i} value={i}>{month}</option>) }
+                  </select>
+                  </>
+                  :
+                  <Button click={() => setSelectingNewMonth(true)} label={newDate.monthName}/>
+                }
+                { selectingNewYear ? <>
+                  <select className={`rounded ${colors.BUTTON_BG}`} name="year" onChange={handleChangeNewDate} defaultValue={selectedDay.year()}>
+                    { Array.from({ length: 100 }, (_, i) => 2000 + i).map(year => <option key={year} value={year}>{year}</option>) }
+                  </select>
+                  </>
+                  :
+                  <Button click={() => setSelectingNewYear(true)} label={newDate.year}/>
+                }
+              </div>
+              <div className="p-1 px-4 border-x"><Button click={goToToday} label="Oggi"/></div>
+              <button className="ml-3 material-symbols-outlined" onClick={() => setSelectingNewDate(false)}>close</button>
+            </div>
             :
-            <h2 className="text-4xl font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingDay(true)}>
+            <h2 className="text-4xl font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingNewDate(true)}>
                 {MonthFormattedStringMMMM(currentDate)} {year}
             </h2>
           }

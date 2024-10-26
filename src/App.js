@@ -1,11 +1,10 @@
-/* TODO
+/* [TODO]
 
 - Modelli:
   > vorrei mostrare gli errori dei validators, ma sembra essere complicato aaaaaaa
-- dark theme fatto bene (con dark:) c'è molto da fare
+- themes fatti come dice Asia
 - calendario
   > modal più piccolo
-  > backend (mannaggia al backed)
 - home 
   > navbar (quasi finita)
   > renderla carino da vedere

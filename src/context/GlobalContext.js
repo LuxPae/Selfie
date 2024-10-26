@@ -22,7 +22,11 @@ const GlobalContext = React.createContext({
   setSelectedDay: (selectedDay) => {},
 
   allEvents: [],
-  dispatchEvent: ({ type, payload }) => {}, 
+  allEvents_initialize: () => {},
+  allEvents_createEvents: (events) => {},
+  allEvents_modifyEvents: (events) => {},
+  allEvents_deleteEvents: (events) => {},
+
   selectedEvent: null,
   setSelectedEvent: (new_event) => {}, 
   showEventModal: false,
@@ -30,10 +34,12 @@ const GlobalContext = React.createContext({
   showEventsList: false,
   setShowEventsList: (new_state) => {},
 
-  notification: null,
-  setNotification: (new_notification) => {},
+  currentNotification: null,
+  setCurrentNotification: (new_notification) => {},
   showNotification: false,
   setShowNotification: (new_state) => {},
+  pendingNotifications: [],
+  setPendingNotifications: (new_arr) => {},
   notify: (type, message) => {},
 
   modifyRepeated: false,

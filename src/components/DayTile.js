@@ -65,7 +65,8 @@ export default function DayTile({ day_date, index, height, last_day_of_month, ev
           {index === last_day_of_month && <span className="text-sm">{MonthFormattedStringMMM(getNextMonthDate(month))}&nbsp;</span> }
       </div>
       <ul style={{scrollbarWidth: "none"}} className="place-self-start ml-1 overflow-auto">
-        {/* TODO metterne 2 e se ce ne sono di più scrivere "di più" (o qualcosa del genere) che se schiacciato li mostra tutti con scrollbar piccola (o senza)*/}
+        {/* TODO metterne 2 e se ce ne sono di più scrivere "di più" (o qualcosa del genere) che se schiacciato li mostra tutti con scrollbar piccola (o senza)
+                 oppure, meglio sistemo la grandezza e poi metto un overflow-x */}
         {events.map((e, i) => <li key={i} onClick={() => handleClick(e)}><DayTileEvent event={e}/></li>)}
       </ul>
     </div>

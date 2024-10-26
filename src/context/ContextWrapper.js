@@ -1,6 +1,7 @@
-import { useState, useReducer } from "react"
+import { useState, useReducer, useEffect } from "react"
 import dayjs from "dayjs"
 import GlobalContext from "./GlobalContext.js"
+import { getAllEvents } from "../API/events.js"
 
 const userReducer = (state, { type, payload }) => {
   //console.log("Dispatching user: ");
@@ -21,29 +22,6 @@ const userReducer = (state, { type, payload }) => {
   }
 };
 
-function eventsReducer(state, { type, payload }) {
-  //console.log("Reducing events:", state);
-  //console.log(" > type:", type);
-  //console.log(" > Event to dispatch:", payload);
-
-  switch (type) {
-    case "CREATE": return [...state, payload];
-    case "MODIFY": {
-      const index = state.findIndex(e => e._id === payload._id);
-      if (index !== -1) {
-        const updatedEvents = [...state];
-        updatedEvents[index] = payload;
-        return updatedEvents;
-      }
-      else return [...state, payload];
-    }
-    case "DELETE": return state.filter(e => e._id !== payload._id);
-    case "ALL":
-      return payload;  
-    default: return state;
-  }
-}
-
 export default function ContextWrapper({ children })
 {
   const [user, dispatchUser] = useReducer(userReducer, null);
@@ -51,7 +29,40 @@ export default function ContextWrapper({ children })
   const [ currentDate, setCurrentDate ] = useState(dayjs());
   const [ selectedDay, setSelectedDay ] = useState(dayjs());
 
-  const [ allEvents, dispatchEvent ] = useReducer(eventsReducer, []);
+  const [ allEvents, setAllEvents ] = useState([]);
+
+  const allEvents_initialize = () => {
+    if (allEvents.length > 0) return;
+    getAllEvents(user)
+      .then(events => {
+        setAllEvents(events)
+    }).catch(error => {
+        console.error(error.message)
+    })
+  }
+  const allEvents_createEvents = (events) => {
+    var new_events = [...allEvents, ...events]
+    setAllEvents(new_events);
+  }
+  const allEvents_modifyEvents = (events) => {
+    var updatedEvents = [...allEvents]
+    for (let i = 0; i < events.length; i++) {
+      const index = allEvents.findIndex(e => e._id === events[i]._id);
+      if (index !== -1) {
+        updatedEvents[index] = events[i];
+      }
+      else updatedEvents.push(events[i]);
+    }
+    setAllEvents(updatedEvents)
+  }
+  const allEvents_deleteEvents = (events) => {
+    var new_events = [...allEvents]
+    for (let i = 0; i < events.length; i++) {
+      new_events = new_events.filter(e => e._id !== events[i]._id);
+    }
+    setAllEvents(new_events)
+  }
+
   const [ selectedEvent, setSelectedEvent ] = useState(null);
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
@@ -63,14 +74,18 @@ export default function ContextWrapper({ children })
   const [ newPicture, setNewPicture ] = useState("");
   const [ newBio, setNewBio ] = useState("");
 
-  const [ notification, setNotification ] = useState(null)
+  const [ currentNotification, setCurrentNotification ] = useState(null)
   const [ showNotification, setShowNotification ] = useState(false);
+  const [ pendingNotifications, setPendingNotifications ] = useState([])
+
   const notify = (type, message) => {
     const notification = { type, message };
-    setNotification(notification);
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 5000);
+    const new_arr = pendingNotifications.splice(0, 0, notification);
+    //console.log("pendingNotifications:", pendingNotifications)
+    setPendingNotifications(new_arr)
   }
+
+  //https://stackoverflow.com/questions/63143315/how-to-call-a-function-every-x-seconds-with-updated-state-react
 
   const [ modifyRepeated, setModifyRepeated] = useState(false);
 
@@ -101,7 +116,11 @@ export default function ContextWrapper({ children })
       setSelectedDay,
 
       allEvents,
-      dispatchEvent,
+      allEvents_initialize,
+      allEvents_createEvents,
+      allEvents_modifyEvents,
+      allEvents_deleteEvents,
+
       showEventModal,
       setShowEventModal,
       showEventsList,
@@ -109,10 +128,12 @@ export default function ContextWrapper({ children })
       selectedEvent,
       setSelectedEvent,
 
-      notification,
-      setNotification,
+      currentNotification,
+      setCurrentNotification,
       showNotification,
       setShowNotification,
+      pendingNotifications,
+      setPendingNotifications,
       notify,
 
       modifyRepeated,

@@ -2,6 +2,7 @@ import GlobalContext from "../context/GlobalContext.js"
 import { useState, useEffect, useContext } from "react"
 import useCheckForUser from "../hooks/useCheckForUser.js"
 import { useNavigate, Link } from "react-router-dom";
+import NotificationsBar from "../components/NotificationsBar.js"
 import * as colors from "../scripts/COLORS.js"
 
 //TODO la notifica non funziona benissimo, il timer si sfancula un po' (nel video dei tips & tricks sistemava questa cosa)
@@ -10,7 +11,7 @@ export default function Header() {
   useCheckForUser();
 
   const navigate = useNavigate();
-  var { user, notification, setNotification, showNotification, setShowNotification, notify } = useContext(GlobalContext); 
+  var { user, currentNotification, showNotification, pendingNotifications, setPendingNotifications, setCurrentNotification, setShowNotification, notify } = useContext(GlobalContext); 
 
   const [dropped, setDropped ] = useState(false);
 
@@ -24,6 +25,42 @@ export default function Header() {
     css += `transparent md:p-0 ${colors.MAIN_HOVER_TEXT}`
     return css;
   }
+
+  const N = 5
+  //TODO togli
+  useEffect(() => {
+    if (pendingNotifications.length > N) return
+    else {
+      for (let i = 0; i < N; i++) {
+        notify("error", "prova "+1)
+      }
+    }
+  }, [])
+
+
+  //const [timer, setTimer] = useState(0)
+
+  //const checkForNotificationsToDisplay = () => {
+  //  if (pendingNotifications.length > 0 && !timer) return pendingNotifications
+  //  else return []
+  //}
+
+  //useEffect(() => console.log("How many notifications?", pendingNotifications.length), [pendingNotifications])
+
+  //useEffect(() => {
+  //  const notifications = checkForNotificationsToDisplay()
+  //  const notification = notifications[notifications.length-1]
+  //  setCurrentNotification(notification);
+  //  console.log("currentNotification", currentNotification)
+  //  setShowNotification(true);
+  //  const t = setTimeout(() => {
+  //    setCurrentNotification(null)
+  //    setTimer(0)
+  //    setShowNotification(false)
+  //  }, 5000)
+  //  setTimer(t)
+  //  console.log("timer:", t)
+  //}, [notify])
 
   return (
     <>
@@ -41,15 +78,17 @@ export default function Header() {
             <li> <Link to="/pomodoro" className={li_css()}>Pomodoro</Link> </li>
             <li> <Link to="/profile" className={li_css()}>Profilo</Link> </li>
             <li className={`${showNotification || "hidden"} flex items-center`}>
-              { notification?.type === "error" && <span className="text-red-500">Errore: {notification?.message}</span>}
-              { notification?.type === "warning" && <span className="text-yellow-500">Attenzione: {notification?.message}</span>}
-              { (notification?.type !==  "error" && notification?.type !== "warning") && 
-                <span className={`${colors.MAIN_TEXT_MEDIUM}`}>{notification?.type}{notification?.type && ":"} {notification?.message}</span>
+              { /* TODO  togli errore, attenzione e messaggio qua a destra*/}
+              { currentNotification?.type === "error" && <span className="text-red-500">Errore: {currentNotification?.message || "errore"}</span>}
+              { currentNotification?.type === "warning" && <span className="text-yellow-500">Attenzione: {currentNotification?.message || "attenzione"}</span>}
+              { (currentNotification?.type !==  "error" && currentNotification?.type !== "warning") && 
+                <span className={`${colors.MAIN_TEXT_MEDIUM}`}>{currentNotification?.type}{currentNotification?.type && ":"} {currentNotification?.message || "messaggio"}</span>
               }
             </li>
           </ul>
         </div>
       </div>
+      <NotificationsBar />
     </nav>
     </>
   )

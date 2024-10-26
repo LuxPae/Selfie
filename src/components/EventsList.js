@@ -1,5 +1,3 @@
-// [TODO]
-// - possibilità di completare le task dal calendario
 import React, { useMemo, useEffect, useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import EventsListEntry from "../components/EventsListEntry.js"
@@ -9,12 +7,11 @@ import * as colors from "../scripts/COLORS.js"
 
 export default function EventsList({ events }) {
 
-  var { user, allEvents, dispatchEvent, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent, filters, setFilters, shownCalendarType, setShownCalendarType, showCompletedTasks, setShowCompletedTasks } = useContext(GlobalContext);
+  var { user, allEvents, selectedDay, showEventsList, showEventModal, setShowEventModal, setShowEventsList, setSelectedEvent, filters, setFilters, shownCalendarType, setShownCalendarType, showCompletedTasks, setShowCompletedTasks } = useContext(GlobalContext);
 
   const [ showFilters, setShowFilters ] = useState(false)
 
   const handleChangeCalendarType = (e) => {
-    console.log(e.target.value);
     setShownCalendarType(e.target.value);
   }
 
@@ -49,6 +46,11 @@ export default function EventsList({ events }) {
     setFilters(updated_filters)
   }
 
+  const calendarTypeAsText = () => {
+    if (shownCalendarType === "tutti") return "eventi o attività"
+    else return shownCalendarType
+  }
+
   return (
     <>
     <div className="w-full max-w-sm h-full mt-8">
@@ -80,14 +82,10 @@ export default function EventsList({ events }) {
                 <option value="eventi">Eventi</option>
                 <option value="attività">Attività</option>
               </select>
-              { shownCalendarType !== "eventi" ?
-                <>
+              { shownCalendarType !== "eventi" && <div className="flex flex-col">
                 <input type="checkbox" value={showCompletedTasks} onChange={(e) => setShowCompletedTasks(e.target.checked)}/>
-                </>
-                :
-                <>
-                </>
-              }
+                <span className="text-xs">Mostra attività completate (TODO: come la sistemo questa scritta?)</span>
+              </div>}
             </div>
             <div className="">
               { !showFilters ?
@@ -120,7 +118,7 @@ export default function EventsList({ events }) {
               :
               <>
               { /* TODO: in base a qual è il shownCalendarType cambia la frase */}
-              <p className="flex justify-center self-center text-xl mt-4">{"Non ci sono eventi o attività per oggi."}</p>
+              <p className="flex justify-center self-center text-xl mt-4">Non ci sono {calendarTypeAsText()} per oggi.</p>
               </>
             }
           </div>
