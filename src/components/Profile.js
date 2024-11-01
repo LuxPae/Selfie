@@ -12,11 +12,14 @@ import axios from "axios"
 import { modifyUser } from "../API/profile.js"
 import { validateUser } from "../scripts/userValidators.js"
 import useCheckForUser from "../hooks/useCheckForUser.js"
+import dayjs from "dayjs"
 
 const Profile = () => {
   useCheckForUser();
 
-  var { user, dispatchUser, notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio } = useContext(GlobalContext);
+  var { user, dispatchUser, notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio, allEvents, allEvents_initialize, currentDate } = useContext(GlobalContext);
+
+  if (allEvents.length <= 0) allEvents_initialize()
 
   const [ loadingError, setLoadingError ] = useState("");
   const [ modifyingState, setModifyingState ] = useState(false);
@@ -187,6 +190,14 @@ const Profile = () => {
           </div>
           </>
         }
+      </div>
+      <div className="">
+        <h2 className="text-xl">Info</h2>
+        <ul className="">
+          <li>Voci nel Calendario: {allEvents.length}</li>
+          <li>Eventi: {allEvents.filter(e => !e.isTask).length} (passati: {allEvents.filter(e => !e.isTask && dayjs(e.end).isBefore(currentDate)).length})</li>
+          <li>Attività: {allEvents.filter(e => e.isTask).length} (completate: {allEvents.filter(e => e.isTask && e.isTask.completed).length})</li>
+        </ul>
       </div>
       </>
   );

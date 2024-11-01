@@ -18,6 +18,8 @@ const GlobalContext = React.createContext({
   
   currentDate: null,
   setCurrentDate: (currentDate) => {},
+  calendarDate: null,
+  setCalendarDate: (calendarDate) => {},
   selectedDay: null, 
   setSelectedDay: (selectedDay) => {},
 

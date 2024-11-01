@@ -1,5 +1,6 @@
-// TODO
+// [TODO]
 // - tiny scrollbars for notes and events
+// - usare il localStorage per mandare informazioni da qui ad altre parti
 import * as colors from "../scripts/COLORS.js"
 import { useEffect } from "react"
 import { getAllEvents } from "../API/events.js"

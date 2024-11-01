@@ -1,6 +1,7 @@
 //[TODO]
 // - current_hour cazzi e mazzi
 // - selecting dates and hours like in the calendar main view
+// - sarebbe bello che se l'evento si ripete ogni giorno puoi scegliere ogni giorno, se è ogni settimana solo 7 giorni, se è mese solo mese, se è anno solo anno
 // - MODAL alternativo per le attività:
 //   > titolo
 //   > data (singola)
@@ -9,7 +10,7 @@
 //   > repeated + repeatedData
 //   > Descrizione
 //   > label
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useMemo } from "react";
 import GlobalContext from "../context/GlobalContext";
 import Button from "../components/Button.js"
 import { getEventsByRepId, createEvent, modifyEvent } from "../API/events.js";
@@ -21,42 +22,6 @@ const labelsClasses = [...Object.values(colors.labelsBackground)]
 
 export default function EventModal() {
   var { user, showEventModal, setShowEventModal, selectedDay, setSelectedDay, currentDate, allEvents_createEvents, allEvents_modifyEvents, selectedEvent, setSelectedEvent, notify, modifyRepeated } = useContext(GlobalContext)
-
-  const [selectingBeginDate, setSelectingBeginDate] = useState(false)
-  const [selectingBeginHour, setSelectingBeginHour] = useState(false)
-  const [selectingCalendarType, setSelectingCalendarType] = useState(false);
-  const [allDay, setAllDay] = useState(false);
-  const [repeated, setRepeated] = useState(false);
-  const [selectingEndDate, setSelectingEndDate] = useState(false)
-  const [isCreatingOrModifying, setIsCreatingOrModifying] = useState(false)
-
-  const [selectingEndsOn, setSelectingEndsOn] = useState(false)
-  const [selectingEndsOnNewDay, setSelectingEndsOnNewDay] = useState(false)
-  const [selectingEndsOnNewMonth, setSelectingEndsOnNewMonth] = useState(false)
-  const [selectingEndsOnNewYear, setSelectingEndsOnNewYear] = useState(false)
-  const [newEndsOn, setNewEndsOn ] = useState((() => {
-    const endsOnDate = selectedEvent ? dayjs(selectedEvent) : dayjs(selectedDay)
-    return { day:endsOnDate.date(), month:endsOnDate.month(), monthName:endsOnDate.format("MMMM"), year:endsOnDate.year()}
-  })())
-
-  const handleChangeNewEndsOn = (e) => {
-    var new_ends_on = {
-      ...newEndsOn,
-      [e.target.name]: e.target.value
-    }
-    if (e.target.name === "month") new_ends_on.monthName = monthsNames[new_ends_on.month]
-    setNewEndsOn(new_ends_on)
-    const endsOn = dayjs({...new_ends_on})
-    const newFormData = {
-      ...formData,
-      repeatedData: {
-        ...formData.repeatedData,
-        endsOn
-      }
-    }
-  }
-
-  const EndsOnDayChoice = () => []
 
   const current_hour_date = (date) => {
     date = dayjs(date)
@@ -86,14 +51,149 @@ export default function EventModal() {
       endsAfter: 2,
     },
   })
-
   const [formData, setFormData] = useState(event_data())
 
+  const [duping, setDuping] = useState(false)
+  const [selectingBeginDate, setSelectingBeginDate] = useState(false)
+  const [selectingBeginHour, setSelectingBeginHour] = useState(false)
+  const [selectingCalendarType, setSelectingCalendarType] = useState(false);
+  const [allDay, setAllDay] = useState(false);
+  const [repeated, setRepeated] = useState(false);
+  const [selectingEndDate, setSelectingEndDate] = useState(false)
+  const [isCreatingOrModifying, setIsCreatingOrModifying] = useState(false)
+
+  const [selectingEndsOn, setSelectingEndsOn] = useState(false)
+  const [newEndsOn, setNewEndsOn ] = useState((() => {
+    const endsOnDate = selectedEvent ? dayjs(selectedEvent) : dayjs(selectedDay)
+    return ({ day: endsOnDate.date(), month: endsOnDate.month(), year: endsOnDate.year() })
+  })())
+
+  //TODO 
+  const endsOnDayChoice = () => {
+    var endsOn = dayjs({...newEndsOn})
+    const begin = dayjs(formData.begin)
+
+    if (formData.repeatedData.every === "week") {
+      var dates = []
+      let i = 1
+      const firstDate = begin.month() === endsOn.month() ? begin : endsOn.startOf("month")
+      let date = firstDate
+      while (!date.isAfter(endsOn.endOf("month"))) {
+        if (date.day() === begin.day()) dates.push(date)
+        date = firstDate.add(i, "day")
+        i++
+      }
+      const daysChoice = dates.map(d => d.date())
+      return daysChoice
+    } else {
+      const daysInEndsOnMonth = endsOn.daysInMonth();
+      var firstDay = begin.month() === endsOn.month() ? begin.date() : 1
+      var daysChoice = []
+      for (let i = firstDay; i <= daysInEndsOnMonth; i++) daysChoice.push(i)
+      return daysChoice
+    }
+  }
+  const endsOnDayChoiceArr = useMemo(endsOnDayChoice, [newEndsOn, formData.begin, formData.repeatedData.every])
+
+  //TODO finire qui
+  const endsOnMonthChoice = () => {
+    const begin = dayjs(formData.begin)
+    const endsOn = dayjs(formData.repeatedData.endsOn)
+    const firstMonth = begin.year() === endsOn.year() ? begin.month() : 0
+    console.log(begin.year()+" == "+endsOn.year()+" ? "+(begin.year() === endsOn.year()))
+    if (begin.year() === endsOn.year()) {
+      const monthsTilTheEnd = 12 - firstMonth
+      const monthsChoice = Array.from({ length: monthsTilTheEnd }, (_, i) => firstMonth + i)
+      console.log(monthsChoice)
+      return monthsChoice
+    } else {
+      const monthsTilTheEnd = 12
+      const monthsChoice = Array.from({ length: monthsTilTheEnd }, (_, i) => i)
+      console.log(monthsChoice)
+      return monthsChoice
+    }
+
+  }
+  const endsOnMonthChoiceArr = useMemo(endsOnMonthChoice, [newEndsOn, formData.begin, formData.repeatedData.every])
+
+  const endsOnYearChoice = () => Array.from({ length: 100 }, (_, i) => dayjs(formData.end).year() + i)
+  const endsOnYearChoiceArr = useMemo(endsOnYearChoice, [newEndsOn, formData.begin])
+
+  const showIfNotRepeatsEvery = (options) => {
+    var result = false
+    for (let option of options) result |= formData.repeatedData.every === option
+    return !result
+  }
+
   useEffect(() => {
-    setFormData(event_data())
-    setAllDay(selectedEvent?.allDay || false)
-    setRepeated(selectedEvent?.repeated || false)
+    if (!duping) {
+      setFormData(event_data())
+      setAllDay(selectedEvent?.allDay || false)
+      setRepeated(selectedEvent?.repeated || false)
+    }
+
+    return () => {
+      setDuping(false)
+    }
   }, [showEventModal, selectedEvent])
+
+  useEffect(() => {}, [selectingBeginDate])
+
+  const handleChangeNewEndsOn = (e) => {
+    const { name, value } = e.target
+    console.log(name, value)
+    const new_ends_on = {
+      ...newEndsOn,
+      [name]: value
+    }
+    console.log(new_ends_on)
+    setNewEndsOn(new_ends_on)
+  }
+
+  //const handleChangeNewEndsOn = (e) => {
+  //  const { name, value } = e.target
+  //  console.log(name, value)
+  //  var new_ends_on = {
+  //    ...newEndsOn,
+  //    [name]: value
+  //  }
+  //  if (name === "day") setSelectingEndsOnNewDay(false)
+  //  else if (name === "month") {
+  //    new_ends_on.monthName = monthsNames[new_ends_on.month]
+  //    setSelectingEndsOnNewMonth(false)
+  //  } 
+  //  else setSelectingEndsOnNewYear(false)
+
+  //  setNewEndsOn(new_ends_on)
+  //}
+
+  const resetEndsOn = () => {
+    const resettedEndsOn = dayjs(formData.end).startOf("day")
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        endsOn: resettedEndsOn
+      }
+    }
+    const new_ends_on = { day: resettedEndsOn.date(), month: resettedEndsOn.month(), year: resettedEndsOn.year() }
+    setNewEndsOn(new_ends_on)
+    setFormData(newFormData)
+    setSelectingEndsOn(false)
+  }
+  const handleConfirmNewEndsOn = () => {
+    const endsOn = dayjs({...newEndsOn}).valueOf()
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        endsOn
+      }
+    }
+    setFormData(newFormData)
+    const new_ends_on = 
+    setSelectingEndsOn(false)
+  }
 
   const handleChange = (e) => {
     const newFormData = {
@@ -161,6 +261,7 @@ export default function EventModal() {
     const newFormData = { ...formData };
     if (e.target.name === "begin") newFormData.begin = new_date;
     else newFormData.end = new_date;
+    // TODO c'è la funzione diff di dayjs
     const duration = Math.floor((dayjs(newFormData.end).subtract(dayjs(newFormData.begin))).valueOf() / (1000*60*60));
     console.log(duration);
     if (duration < 0) {
@@ -195,7 +296,6 @@ export default function EventModal() {
   }
 
   const handleChangeRepetitionEndsOn = (e) => {
-    console.log(e.target.value)
     const newFormData = {
       ...formData,
       repeatedData: {
@@ -205,7 +305,6 @@ export default function EventModal() {
     }
     setFormData(newFormData)
     setSelectingEndsOn(false);
-    console.log(formData)
   }
 
   const handleChangeRepetitionEndsAfter = (e) => {
@@ -326,9 +425,30 @@ export default function EventModal() {
     setIsCreatingOrModifying(false);
   }
 
+  const duplicateEventContent = () => {
+    setDuping(true)
+    const duplicateEvent = {
+      ...selectedEvent,
+      repeatedData: {
+        ...selectedEvent.repeatedData,
+        rep_id: ""
+      }
+    }
+    delete duplicateEvent._id
+    setSelectedEvent(null)
+    setFormData(duplicateEvent)
+  }
+
+  const formatEndsOnDate = () => {
+    const endsOn = dayjs(formData.repeatedData.endsOn)
+    if (showIfNotRepeatsEvery(["month", "year"])) return endsOn.format("dddd D MMMM YYYY")
+    else if (showIfNotRepeatsEvery(["month"])) return endsOn.format("YYYY")
+    else return endsOn.format("MMMM YYYY") 
+
+  }
+
   return (
     <div className="h-full max-w-auto flex justify-right items-right">
-      <p>{dayjs(formData.repeatedData.endsOn).format("DD-MM-YYYY")}</p>
       {/*<div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">*/}
       <form onSubmit={handleSubmit} className={`${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
         <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-3 flex rounded-t-lg justify-between items-start`}>
@@ -360,8 +480,8 @@ export default function EventModal() {
             </div>
           </div>
 
-          <button onClick={closeModal}>
-            <span className="material-icons-outlined text-white rounded w-4 mt-2" tabIndex="0">
+          <button type="button" onClick={closeModal}>
+            <span className="material-symbols-outlined text-white rounded w-4 mt-2" tabIndex="0">
               close
             </span>
           </button>
@@ -402,9 +522,18 @@ export default function EventModal() {
               }
             </div>
           </div>}
-          { (selectedEvent && selectedEvent.repeated) ? 
+          { selectedEvent ? 
             <>
-            <p className="my-4 p-2 max-w-[300px] border border-red-500 text-center">Non puoi modificare le opzioni di ripetizione per un evento ripetuto, piuttosto eliminalo e ricrealo.</p>
+            <div className="my-4 p-2 flex flex-col max-w-[300px] border border-red-500 text-center">
+              <p className="">Non puoi modificare le opzioni di ripetizione per un evento ripetuto.</p>
+              <div className="flex items-center justify-center space-x-4 mt-4">
+                <div className="flex flex-col">
+                  <span>Crea un nuovo evento</span>
+                  <span>con lo stesso contenuto</span>
+                </div>
+                <button className="material-icons-outlined" type="button" onClick={duplicateEventContent}>content_copy</button>
+              </div>
+            </div>
             </>
             :
             <>
@@ -418,7 +547,8 @@ export default function EventModal() {
             { repeated && <div className="flex-col flex items-center justify-center justify-content-center">
               <div className="flex flex-col space-x-4 items-center">
                 <span className="">Ogni</span>
-                <select className={`p-1 mt-2 rounded mb-4 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`} defaultValue={formData.repeatedData.every} onChange={handleChangeRepeatedEvery} required>
+                <select className={`p-1 mt-2 rounded mb-4 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
+                        defaultValue={formData.repeatedData.every} onChange={handleChangeRepeatedEvery} required>
                   <option value="">-----</option>
                   <option value="day">giorno</option>
                   <option value="week">settimana, di {dayjs(formData.begin).format("dddd")}</option>
@@ -433,65 +563,41 @@ export default function EventModal() {
                   </div>
                   <div className="flex flex-col">
                     <div className="flex ml-4 mb-2">
-                      <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsOn"}/>
-                      { selectingEndsOn ? <div className="flex">
-                          <div className="ml-2 flex space-x-2 mr-4">
-                            { selectingEndsOnNewDay ? <>
-                              <select className={`rounded ${colors.BUTTON_BG}`} name="day" onChange={handleChangeNewEndsOn} defaultValue={selectedDay.date()}>
-                                { EndsOnDayChoice().map(day => <option key={day} value={day}>{day}</option>) }
+                      <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsOn"} required/>
+                      { selectingEndsOn ? <div className="ml-2 flex flex-col">
+                          <div className="border-b mb-1 py-2 flex items-center justify-center space-x-2">
+                            { showIfNotRepeatsEvery(["month", "year"]) && 
+                              <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                                      name="day" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.day}>
+                                { endsOnDayChoiceArr.map(day => <option key={day} value={day}>{day}</option>) }
                               </select>
-                              </>
-                              :
-                              <Button click={() => setSelectingEndsOnNewDay(true)} label={newEndsOn.day}/> 
                             }
-                            { selectingEndsOnNewMonth ? <>
-                              <select className={`rounded ${colors.BUTTON_BG}`} name="month" onChange={handleChangeNewEndsOn} defaultValue={selectedDay.month()}>
-                                { monthsNames.map((month, i) => <option key={i} value={i}>{month}</option>) }
+                            { showIfNotRepeatsEvery(["year"]) &&
+                              <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                                      name="month" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.month}>
+                                { endsOnMonthChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                               </select>
-                              </>
-                              :
-                              <Button click={() => setSelectingEndsOnNewMonth(true)} label={newEndsOn.monthName}/>
                             }
-                            { selectingEndsOnNewYear ? <>
-                              <select className={`rounded ${colors.BUTTON_BG}`} name="year" onChange={handleChangeNewEndsOn} defaultValue={selectedDay.year()}>
-                                { Array.from({ length: 100 }, (_, i) => 2000 + i).map(year => <option key={year} value={year}>{year}</option>) }
-                              </select>
-                              </>
-                              :
-                              <Button click={() => setSelectingEndsOnNewYear(true)} label={newEndsOn.year}/>
-                            }
+                            <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                                    name="year" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.year}>
+                              { endsOnYearChoiceArr.map(year => <option key={year} value={year}>{year}</option>) }
+                            </select>
                           </div>
-                          <div className="p-1 px-4 border-x"><Button click={() => alert("TODO, ma sai che ci starebbe? Così lo resetti al giorno corrente")} label="Oggi"/></div>
-                          <button className="ml-3 material-symbols-outlined" onClick={() => setSelectingEndsOn(false)}>close</button>
+                          <div className="flex items-center justify-center">
+                            <button type="button" className="material-symbols-outlined" onClick={handleConfirmNewEndsOn}>check</button>
+                            <div className="p-1 px-4"><Button click={resetEndsOn} label="Oggi"/></div>
+                            <button type="button" className="material-symbols-outlined" onClick={() => setSelectingEndsOn(false)}>close</button>
+                          </div>
                         </div>
                         :
-                        <>
-                        <p className="text-5xl">TODO</p>
-                        <Button click={() => setSelectingEndsOn(true)} label={dayjs(formData.repeatedData.endsOn).format("dddd DD MMMM YYYY")} otherCss={"ml-2"}/>
-                        </>
+                        <Button click={() => setSelectingEndsOn(true)} label={formatEndsOnDate()} otherCss={"ml-2"}/>
                       }
-                      { /* TODO 
-                      { selectingEndsOn ?
-                        <>
-                        <div className={`ml-2 p-1 flex justify-between ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded`}>
-                          <label className="">il</label>
-                          <input type="date" name="date" value={dayjs(formData.repeatedData.endsOn).format("YYYY-MM-DD")}
-                                 className={`ml-2 rounded bg-inherit`}
-                                 onChange={handleChangeRepetitionEndsOn} 
-                          />             
-                        </div>
-                        </>
-                        :
-                        <span className={`rounded ml-2 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} px-2 p-1 cursor-pointer`}
-                              onClick={() => setSelectingEndsOn(true)}>{dayjs(formData.repeatedData.endsOn).format("dddd D MMMM YYYY") || dayjs(formData.date).format("dddd D MMMM YYYY")}
-                        </span>
-                      } */}
                     </div>
                     <div className="ml-4">
                       <input type="radio" value="endsAfter" name="repeated_type"
-                             onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsAfter"}/>
+                             onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsAfter"} required/>
                       <label className="ml-2">dopo</label>
-                      <input type="number" className={`max-w-[45px] ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} pl-1 mt-2 rounded mx-3`} value={formData.repeatedData.endsAfter || 2} onChange={handleChangeRepetitionEndsAfter} min="2" max="365"/>
+                      <input type="number" className={`max-w-[50px] ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} pl-1 mt-2 rounded mx-3`} value={formData.repeatedData.endsAfter || 2} onChange={handleChangeRepetitionEndsAfter} min="2" max="365"/>
                       <span>occorrenze</span>
                     </div>
                   </div>

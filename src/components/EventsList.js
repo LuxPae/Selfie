@@ -74,25 +74,25 @@ export default function EventsList({ events }) {
               </button>
             </div>
           </header>
-          <div className="border-b px-2 mt-2 flex justify-between">
-            <div className="flex items-center space-x-2">
-              <select className="rounded" defaultValue={shownCalendarType} onChange={handleChangeCalendarType}>
+          <div className="border-b mt-2 flex flex-col justify-between">
+            <div className="border-b px-2 pb-2 flex items-center space-x-2">
+              <select className="appearance-none text-center px-2 rounded py-2" defaultValue={shownCalendarType} onChange={handleChangeCalendarType}>
                 <option value="tutti">Mostra</option>
                 <option value="tutti">Tutti</option>
                 <option value="eventi">Eventi</option>
                 <option value="attività">Attività</option>
               </select>
-              { shownCalendarType !== "eventi" && <div className="flex flex-col">
-                <input type="checkbox" value={showCompletedTasks} onChange={(e) => setShowCompletedTasks(e.target.checked)}/>
-                <span className="text-xs">Mostra attività completate (TODO: come la sistemo questa scritta?)</span>
+              { shownCalendarType !== "eventi" && <div className="flex items-center">
+                <input className="w-4 h-4" type="checkbox" value={showCompletedTasks} onChange={(e) => setShowCompletedTasks(e.target.checked)}/>
+                <span className="ml-2 ">Mostra attività completate</span>
               </div>}
             </div>
-            <div className="">
+            <div className="mt-2 px-2">
               { !showFilters ?
                 <span onClick={() => setShowFilters(true)} className="cursor-pointer material-symbols-outlined">filter_alt</span>
                 :
                 <>
-                <span title="togli tutti" className="cursor-pointer material-symbols-outlined" onClick={handleClearFilters}>clear_all</span>
+                <span onClick={handleResetFilters} className="cursor-pointer material-symbols-outlined">filter_alt_off</span>
                 <span className="mx-3 inline-flex space-x-2">
                   {labelsNames.map((label, i) => (
                     <div key={i} className={`${!filters[label] ? labelsBackground[label] : ""}`}>
@@ -105,7 +105,7 @@ export default function EventsList({ events }) {
                     </div>
                     ))}
                 </span>
-                <span onClick={handleResetFilters} className="cursor-pointer material-symbols-outlined">filter_alt_off</span>
+                <span title="togli tutti" className="cursor-pointer material-symbols-outlined" onClick={handleClearFilters}>clear_all</span>
                 </>
               }
             </div>
@@ -117,7 +117,6 @@ export default function EventsList({ events }) {
               </ul>
               :
               <>
-              { /* TODO: in base a qual è il shownCalendarType cambia la frase */}
               <p className="flex justify-center self-center text-xl mt-4">Non ci sono {calendarTypeAsText()} per oggi.</p>
               </>
             }

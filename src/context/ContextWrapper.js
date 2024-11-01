@@ -27,6 +27,7 @@ export default function ContextWrapper({ children })
   const [user, dispatchUser] = useReducer(userReducer, null);
 
   const [ currentDate, setCurrentDate ] = useState(dayjs());
+  const [calendarDate, setCalendarDate] = useState(currentDate.startOf("month"))
   const [ selectedDay, setSelectedDay ] = useState(dayjs());
 
   const [ allEvents, setAllEvents ] = useState([]);
@@ -112,6 +113,8 @@ export default function ContextWrapper({ children })
 
       currentDate,
       setCurrentDate,
+      calendarDate,
+      setCalendarDate,
       selectedDay,
       setSelectedDay,
 

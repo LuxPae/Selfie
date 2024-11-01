@@ -88,7 +88,7 @@ export default function Header() {
           </ul>
         </div>
       </div>
-      <NotificationsBar />
+      {/* TODO <NotificationsBar /> */}
     </nav>
     </>
   )
