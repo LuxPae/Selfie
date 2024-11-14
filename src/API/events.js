@@ -39,81 +39,167 @@ export const getEventsByRepId = async (user, rep_id) => {
   }
 };
 
-export const createEvent = async(event, user) => {
+//export const createEvent = async(event, user) => {
+//  try {
+//    var res = null;
+//    if (event.repeated) {
+//      if (event.repeatedData.type === "endsOn") {
+//        var repeated_events = [];
+//        const last_date = dayjs(event.repeatedData.endsOn).add(dayjs(event.begin).hour(), "hour").add(dayjs(event.begin).minute(), "minute");
+//        console.log("last_date: ", last_date.format("DD-MM-YYYY HH:mm"))
+//        const initial_date_begin = dayjs(event.begin);
+//        console.log("initial date begin: ", initial_date_begin.format("DD-MM-YYYY HH:mm"))
+//        const initial_date_end = dayjs(event.end);
+//        let i = 0;
+//        var current_date_begin = initial_date_begin
+//        var current_date_end = initial_date_end
+//        while(current_date_begin.isBefore(last_date)) {
+//          current_date_begin = initial_date_begin.add(i, event.repeatedData.every);
+//          console.log(i+":", current_date_begin.format("DD-MM-YYYY HH:mm"))
+//          current_date_end = initial_date_end.add(i, event.repeatedData.every);
+//          const rep_event = {
+//            ...event,
+//            begin: current_date_begin.valueOf(),
+//            end: current_date_end.valueOf()
+//          }
+//          res = await axios.post(
+//            `${EVENTS_API_URL}/${user._id}`,
+//            { ...rep_event },
+//            { headers: { Authorization: `Bearer ${user.token}` }}
+//          );
+//          if (res.status === 201) {
+//            repeated_events.push(res.data);
+//          }
+//          else throw new Error("Failed to create event");
+//          i++;
+//        }
+//        console.log(repeated_events)
+//        return repeated_events
+//      } else if (event.repeatedData.type === "endsAfter") {
+//        var repeated_events = [];
+//        const initial_rep_num = event.repeatedData.endsAfter;
+//        for (let i = 1; i <= initial_rep_num; i++) {
+//          const begin = dayjs(event.begin).add(i-1, event.repeatedData.every)
+//          const end = dayjs(event.end).add(i-1, event.repeatedData.every)
+//          const rep_event = {
+//            ...event,
+//            begin: begin.valueOf(),
+//            end: end.valueOf(),
+//            repeatedData: {
+//              ...event.repeatedData,
+//              endsAfter: initial_rep_num-i+1
+//            }
+//          }
+//          //console.log("creating event that ends after "+i+" occurrences", rep_event)
+//          res = await axios.post(
+//            `${EVENTS_API_URL}/${user._id}`,
+//            { ...rep_event },
+//            { headers: { Authorization: `Bearer ${user.token}` }}
+//          );
+//          if (res.status === 201) repeated_events.push(res.data);
+//          else throw new Error("Failed to create event");
+//        }
+//        return repeated_events;
+//      }
+//    } else {
+//      const res = await axios.post(
+//        `${EVENTS_API_URL}/${user._id}`,
+//        { ...event },
+//        { headers: { Authorization: `Bearer ${user.token}` }}
+//      );
+//      if (res.status === 201) return [res.data];
+//      else throw new Error("Failed to create event");
+//    }
+//  } catch (error) {
+//    console.error(error.message);
+//    return null;
+//  }
+//}
+
+export const createSingleEvent = async (event, user) => {
   try {
-    var res = null;
-    if (event.repeated) {
-      if (event.repeatedData.type === "endsOn") {
-        var repeated_events = [];
-        const last_date = dayjs(event.repeatedData.endsOn).add(dayjs(event.begin).hour(), "hour").add(dayjs(event.begin).minute(), "minute");
-        console.log("last_date: ", last_date.format("DD-MM-YYYY HH:mm"))
-        const initial_date_begin = dayjs(event.begin);
-        console.log("initial date begin: ", initial_date_begin.format("DD-MM-YYYY HH:mm"))
-        const initial_date_end = dayjs(event.end);
-        let i = 0;
-        var current_date_begin = initial_date_begin
-        var current_date_end = initial_date_end
-        while(current_date_begin.isBefore(last_date)) {
-          current_date_begin = initial_date_begin.add(i, event.repeatedData.every);
-          console.log(i+":", current_date_begin.format("DD-MM-YYYY HH:mm"))
-          current_date_end = initial_date_end.add(i, event.repeatedData.every);
-          const rep_event = {
-            ...event,
-            begin: current_date_begin.valueOf(),
-            end: current_date_end.valueOf()
-          }
-          res = await axios.post(
-            `${EVENTS_API_URL}/${user._id}`,
-            { ...rep_event },
-            { headers: { Authorization: `Bearer ${user.token}` }}
-          );
-          if (res.status === 201) {
-            repeated_events.push(res.data);
-          }
-          else throw new Error("Failed to create event");
-          i++;
+    const res = await axios.post(
+      `${EVENTS_API_URL}/${user._id}`,
+      { ...event },
+      { headers: { Authorization: `Bearer ${user.token}` }}
+    );
+    if (res.status === 201) return res.data;
+    else throw new Error("Failed to create event");
+  } catch (error) {
+    console.error(error.message);
+    return null;
+  }
+}
+
+export const createRepeatedEvent = async (event, user) => {
+  try {
+    if (event.repeatedData.type === "endsOn") {
+      var repeated_events = [];
+      const last_date = dayjs(event.repeatedData.endsOn).add(dayjs(event.begin).hour(), "hour").add(dayjs(event.begin).minute(), "minute");
+      console.log("last_date: ", last_date.format("DD-MM-YYYY HH:mm"))
+      const initial_date_begin = dayjs(event.begin);
+      console.log("initial date begin: ", initial_date_begin.format("DD-MM-YYYY HH:mm"))
+      const initial_date_end = dayjs(event.end);
+      let i = 0;
+      var current_date_begin = initial_date_begin
+      var current_date_end = initial_date_end
+      while(current_date_begin.isBefore(last_date)) {
+        current_date_begin = initial_date_begin.add(i, event.repeatedData.every);
+        console.log(i+":", current_date_begin.format("DD-MM-YYYY HH:mm"))
+        current_date_end = initial_date_end.add(i, event.repeatedData.every);
+        const rep_event = {
+          ...event,
+          begin: current_date_begin.valueOf(),
+          end: current_date_end.valueOf()
         }
-        console.log(repeated_events)
-        return repeated_events
-      } else if (event.repeatedData.type === "endsAfter") {
-        var repeated_events = [];
-        const initial_rep_num = event.repeatedData.endsAfter;
-        for (let i = 1; i <= initial_rep_num; i++) {
-          const begin = dayjs(event.begin).add(i-1, event.repeatedData.every)
-          const end = dayjs(event.end).add(i-1, event.repeatedData.every)
-          const rep_event = {
-            ...event,
-            begin: begin.valueOf(),
-            end: end.valueOf(),
-            repeatedData: {
-              ...event.repeatedData,
-              endsAfter: initial_rep_num-i+1
-            }
-          }
-          //console.log("creating event that ends after "+i+" occurrences", rep_event)
-          res = await axios.post(
-            `${EVENTS_API_URL}/${user._id}`,
-            { ...rep_event },
-            { headers: { Authorization: `Bearer ${user.token}` }}
-          );
-          if (res.status === 201) repeated_events.push(res.data);
-          else throw new Error("Failed to create event");
+        const res = await axios.post(
+          `${EVENTS_API_URL}/${user._id}`,
+          { ...rep_event },
+          { headers: { Authorization: `Bearer ${user.token}` }}
+        );
+        if (res.status === 201) {
+          repeated_events.push(res.data);
         }
-        return repeated_events;
+        else throw new Error("Failed to create event");
+        i++;
       }
-    } else {
-      const res = await axios.post(
-        `${EVENTS_API_URL}/${user._id}`,
-        { ...event },
-        { headers: { Authorization: `Bearer ${user.token}` }}
-      );
-      if (res.status === 201) return [res.data];
-      else throw new Error("Failed to create event");
+      console.log(repeated_events)
+      return repeated_events
+    } 
+    else if (event.repeatedData.type === "endsAfter") {
+      var repeated_events = [];
+      const initial_rep_num = event.repeatedData.endsAfter;
+      for (let i = 1; i <= initial_rep_num; i++) {
+        const begin = dayjs(event.begin).add(i-1, event.repeatedData.every)
+        const end = dayjs(event.end).add(i-1, event.repeatedData.every)
+        const rep_event = {
+          ...event,
+          begin: begin.valueOf(),
+          end: end.valueOf(),
+          repeatedData: {
+            ...event.repeatedData,
+            endsAfter: initial_rep_num-i+1
+          }
+        }
+        //console.log("creating event that ends after "+i+" occurrences", rep_event)
+        const res = await axios.post(
+          `${EVENTS_API_URL}/${user._id}`,
+          { ...rep_event },
+          { headers: { Authorization: `Bearer ${user.token}` }}
+        );
+        if (res.status === 201) repeated_events.push(res.data);
+        else throw new Error("Failed to create event");
+      }
+      return repeated_events;
     }
   } catch (error) {
     console.error(error.message);
     return null;
   }
+}
+
+export const createMultipleDaysEvent = async (event, user) => {
+  alert("TODO")
 }
 
 export const modifyEvent = async (event_to_modify, user, modifyRepeated) => {

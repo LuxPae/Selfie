@@ -92,7 +92,7 @@ export const labelsBorder = {
   cyan: "border-cyan-400",
   blue: "border-blue-600"
 }
-export const titleColor = {
+export const labelsTextContrast = {
   white: "text-black",
   red: "text-white",
   orange: "text-black",
@@ -100,4 +100,13 @@ export const titleColor = {
   green: "text-black",
   cyan: "text-black",
   blue: "text-white"
+}
+export const labelsBorderContrast = {
+  white: "border-black",
+  red: "border-white",
+  orange: "border-black",
+  yellow: "border-black",
+  green: "border-black",
+  cyan: "border-black",
+  blue: "border-white"
 }

@@ -19,7 +19,7 @@ const Calendar = () => {
 
   useCheckForUser();
 
-  var { user, currentDate, setCurrentDate, calendarDate, setCalendarDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, allEvents_initialize, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
+  var { user, currentDate, setCurrentDate, calendarDate, setCalendarDate, selectedDay, setSelectedDay, selectedEvent, setSelectedEvent, showEventModal, showEventsList, setShowEventsList, allEvents, setAllEvents, allEvents_initialize, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
   const navigate = useNavigate();
 
   const [selectingNewDate, setSelectingNewDate] = useState(false)
@@ -42,8 +42,21 @@ const Calendar = () => {
   }
 
   useEffect(() => {
-    if(!user) navigate("/");
-  }, [user])
+    console.log("lo so che sei tu")
+    if(!user) navigate("/")
+
+    allEvents_initialize()
+
+    if (selectedDay) setShowEventsList(true);
+
+    const ls_event = JSON.parse(localStorage.getItem("event_from_home"))
+    if (ls_event) {
+      const event_day = dayjs(ls_event.begin).startOf("day")
+      setSelectedDay(event_day)
+      setCalendarDate(event_day.startOf("month"))
+      localStorage.removeItem("event_from_home")
+    }
+  }, [user/*, currentDate*/])
 
   const filterEventsByDate = (events, date) => events.filter(e => dayjs(date.startOf("day")).isSame(dayjs(e.begin).startOf("day")))
   const filterEventsByLabel = (events) => events.filter((event, i) => filters[event.label]);
@@ -60,10 +73,6 @@ const Calendar = () => {
   const allEventsToDisplay = filterCompletedTasks(allEventsByType)
 
   const selectedDayEventsToDisplay = filterEventsByDate(allEventsToDisplay, selectedDay)
-
-  useEffect(() => {
-    allEvents_initialize()
-  }, [allEvents])
 
   const calendarYear = calendarDate.year();
   const calendarMonth = calendarDate.month();
@@ -114,10 +123,6 @@ const Calendar = () => {
     let month = date.format("MMMM");
     return month[0].toUpperCase() + month.slice(1);
   }
-  
-  useEffect(() => {
-    if (selectedDay) setShowEventsList(true);
-  }, [selectedDay]);
 
   const day_tile_height = () => {
     if (calendarMonthDates.length <= 28) return "120px"
@@ -129,15 +134,7 @@ const Calendar = () => {
     let css = "m-1"
     if (showEventModal) {
       css = "mx-2 rounded-lg"
-    }
-    return css
-  }
-
-  const EventsListCSS = () => {
-    let css = ""
-    if (showEventsList) {
-      css = ""
-    }
+    } else css = "hidden"
     return css
   }
 
@@ -166,9 +163,9 @@ const Calendar = () => {
     <div className="flex flex-col">
     <Header/>
 
-    <div className="flex justify-center">
+    <div className="flex justify-around">
 
-      <div className={EventsListCSS()}>
+      <div className="">
         { showEventsList && <EventsList events={selectedDayEventsToDisplay}/> }
       </div>
 
@@ -177,7 +174,7 @@ const Calendar = () => {
       </div>
 
     <div className={CalendarCSS()}>
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex justify-between items-center">
         <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
         <div>
           { selectingNewDate ? <div className="flex">
@@ -197,7 +194,7 @@ const Calendar = () => {
               <button className="ml-3 material-symbols-outlined" onClick={() => setSelectingNewDate(false)}>close</button>
             </div>
             :
-            <h2 className="text-4xl font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingNewDate(true)}>
+            <h2 className="text-4xl text-center font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingNewDate(true)}>
                 {MonthFormattedStringMMMM(calendarDate)} {calendarYear}
             </h2>
           }

@@ -34,11 +34,18 @@ export default function DayTileEvent({ event })
     }
   }
 
+  const lastsMoreDaysFormat = () => {
+    const info = event.lastsMoreDays
+    if (info) return `(${info.num}/${info.total})`
+  }
+
   const completed = event.isTask?.completed
   
-  return (<div className="hover:border px-px flex items-center space-x-1" title={event.title}>
-    <span className={`${labelsBackground[event.label]} ${completed ? labelsBackground[event.label]+" opacity-50" : ""} rounded w-3 ${event.isTask ? "h-3 cursor-pointer" : "h-1" } flex items-center justify-center text-black`} onClick={handleCompleteTask}>{completed ? '✓' : ""}</span>
-    {/*<p className="text-xs">{trimmed_title()}</p>*/}
-    <p className={`text-xs ${completed ? "line-through text-zinc-600" : ""}`}>{event.title}</p>
-  </div>)
+  //TODO tronco il titolo?
+  return (
+    <div className="hover:border px-px flex items-center space-x-1" title={event.title}>
+      <span className={`${labelsBackground[event.label]} ${completed ? labelsBackground[event.label]+" opacity-50" : ""} rounded w-3 ${event.isTask ? "h-3 cursor-pointer" : "h-1" } flex items-center justify-center text-black`} onClick={handleCompleteTask}>{completed ? '✓' : ""}</span>
+      <p className={`text-xs leading-none ${completed ? "line-through text-zinc-600" : ""}`}><span className="flex flex-col text-[8px]">{lastsMoreDaysFormat()}</span> {trimmed_title()}</p>
+    </div>
+  )
 }

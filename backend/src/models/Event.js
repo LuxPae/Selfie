@@ -15,11 +15,6 @@ const eventSchema = new mongoose.Schema({
     type: String, 
     required: false 
   },
-  //isTask: {
-  //  type: Boolean,
-  //  required: true,
-  //  default: false
-  //},
   isTask: {
     completed: { type: Boolean, default: false },
   },
@@ -42,6 +37,10 @@ const eventSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: dayjs().valueOf()
+  },
+  lastsMoreDays: {
+    num: { type: Number },
+    total: { type: Number },
   },
   repeated: {
     type: Boolean,

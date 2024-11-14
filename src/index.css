@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scrollbar-width: thin;
+}
+
 body {
   margin: 0px;
   padding: 0px;

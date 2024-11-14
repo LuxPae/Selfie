@@ -53,7 +53,7 @@ export default function EventsList({ events }) {
 
   return (
     <>
-    <div className="w-full max-w-sm h-full mt-8">
+    <div className="w-full min-w-sm h-full">
       <div className="flex justify-right items-right">
         <form className={`${colors.CALENDAR_BG_MEDIUM} rounded-lg`}>
           <header className={`border-b ${colors.CALENDAR_BG_MEDIUM}`}>
@@ -64,7 +64,10 @@ export default function EventsList({ events }) {
                 title="crea evento"
               > Add
               </button>}
-              <p className="text-xl">{selectedDay.format("dddd D MMMM YYYY")}</p>
+              <div className="flex flex-col">
+                <p className={`${showEventModal ? "text-left" : "text-center"} text-xl`}>{selectedDay.format("dddd")}</p>
+                <p className="text-xl">{selectedDay.format("D MMMM YYYY")}</p>
+              </div>
               <button
                 onClick={() => {setShowEventsList(false); setShowEventModal(false)}}
                 className="material-symbols-outlined text-white rounded text-3xl"

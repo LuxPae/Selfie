@@ -27,24 +27,108 @@ export default function ContextWrapper({ children })
   const [user, dispatchUser] = useReducer(userReducer, null);
 
   const [ currentDate, setCurrentDate ] = useState(dayjs());
+  localStorage.setItem("currentDate", JSON.stringify(currentDate))
+
   const [calendarDate, setCalendarDate] = useState(currentDate.startOf("month"))
-  const [ selectedDay, setSelectedDay ] = useState(dayjs());
+  const [ selectedDay, setSelectedDay ] = useState(currentDate);
 
   const [ allEvents, setAllEvents ] = useState([]);
+
+  const more_than_one_day_dates = (begin, end, total) => {
+    var dates = []
+    var i = 0
+    //while (!begin.add(i, "day").isAfter(end)) {
+    //  const current = {
+    //    begin: (() => {
+    //      if (i == 0) return begin
+    //      else return begin.add(i, "day").startOf("day")
+    //    })(),
+    //    end: (() => {
+    //      if (i == total-1) return end
+    //      else return begin.add(i, "day").endOf("day")
+    //    })(),
+    //    allDay: (() => i != 0 && i != total-1)()
+    //  }
+    //  dates.push(current)
+    //  i++
+    //}
+    for (let i = 0; i < total; i++) {
+      const current = {
+        begin: (() => {
+          if (i == 0) return begin
+          else return begin.add(i, "day").startOf("day")
+        })(),
+        end: (() => {
+          if (i == total-1) return end
+          else return begin.add(i, "day").endOf("day")
+        })(),
+        allDay: (() => i != 0 && i != total-1)()
+      }
+      dates.push(current)
+    }
+    return dates
+  }
+
+  const [multipleDaysEvents, setMultipleDaysEvents] = useState([])
+  const clearMultipleEvents = (events) => {
+    setMultipleDaysEvents([])
+    const cleared_events = events.filter(e => !e.lastsMoreDays || e.lastsMoreDays?.num == 1)
+    return cleared_events
+  }
+  const createMultipleDaysEvents = (events) => {
+    var all_events = clearMultipleEvents(events)
+    var md_events = []
+    for (let event of all_events) {
+      if (event.lastsMoreDays) {
+        md_events.push({...event})
+        const dates = more_than_one_day_dates(dayjs(event.begin), dayjs(event.end), event.lastsMoreDays.total)
+        if (dates.length != event.lastsMoreDays.total) console.error("What the HEEEEEELL");
+        //console.log("dates", dates)
+        event = {
+          ...event,
+          begin: dates[0].begin,
+          end: dates[0].end,
+          allDay: dates[0].allDay,
+        }
+        //console.log("First day", event)
+        for (let i = 1; i < event.lastsMoreDays.total; i++) {
+          let e = {
+            ...event,
+            begin: dates[i].begin,
+            end: dates[i].end,
+            allDay: dates[i].allDay,
+            lastsMoreDays: {
+              num: i+1,
+              total: event.lastsMoreDays.total
+            }
+          }
+          const index = all_events.findIndex(evt => evt._id === e._id && evt.lastsMoreDays.num === e.lastsMoreDays.num)
+          if (index == -1) all_events.push(e)
+        }
+      }
+    }
+    //console.log("Multiple days events:", md_events)
+    setMultipleDaysEvents(md_events)
+    return all_events
+  }
 
   const allEvents_initialize = () => {
     if (allEvents.length > 0) return;
     getAllEvents(user)
       .then(events => {
-        setAllEvents(events)
+        const all_events = createMultipleDaysEvents(events)
+        setAllEvents(all_events)
     }).catch(error => {
         console.error(error.message)
     })
   }
+
   const allEvents_createEvents = (events) => {
     var new_events = [...allEvents, ...events]
-    setAllEvents(new_events);
+    const allNewEvents = createMultipleDaysEvents(new_events)
+    setAllEvents(allNewEvents);
   }
+
   const allEvents_modifyEvents = (events) => {
     var updatedEvents = [...allEvents]
     for (let i = 0; i < events.length; i++) {
@@ -54,8 +138,10 @@ export default function ContextWrapper({ children })
       }
       else updatedEvents.push(events[i]);
     }
-    setAllEvents(updatedEvents)
+    const allUpdatedEvents = createMultipleDaysEvents(updatedEvents)
+    setAllEvents(allUpdatedEvents)
   }
+
   const allEvents_deleteEvents = (events) => {
     var new_events = [...allEvents]
     for (let i = 0; i < events.length; i++) {
@@ -123,6 +209,7 @@ export default function ContextWrapper({ children })
       allEvents_createEvents,
       allEvents_modifyEvents,
       allEvents_deleteEvents,
+      multipleDaysEvents,
 
       showEventModal,
       setShowEventModal,

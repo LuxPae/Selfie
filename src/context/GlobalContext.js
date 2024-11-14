@@ -28,6 +28,7 @@ const GlobalContext = React.createContext({
   allEvents_createEvents: (events) => {},
   allEvents_modifyEvents: (events) => {},
   allEvents_deleteEvents: (events) => {},
+  multipleDaysEvents: [],
 
   selectedEvent: null,
   setSelectedEvent: (new_event) => {}, 

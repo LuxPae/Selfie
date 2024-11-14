@@ -3,33 +3,45 @@ import dayjs from "dayjs"
 
 export default function Prova()
 {
-  const today = dayjs();
-  const day = dayjs(today).add(1, "day");
-  const week = dayjs(today).add(1, "week");
-  const month = dayjs(today).add(1, "month");
-  const year = dayjs(today).add(1, "year");
+  const begin = dayjs()
+  const end_today = begin.add(1, "hour")
+  const end_after_today = begin.add(10, "day").add(1, "hour")
 
-  const d1_b = dayjs(1729373314580)
-  const d1_e = dayjs(1729363440000) 
-  const d2_b = dayjs(1729459714580) 
-  const d2_e = dayjs(1729449840000) 
-  const d3_b = dayjs(1729546114580) 
-  const d3_e = dayjs(1729536240000) 
+  const durata_in_giorni = end_after_today.diff(begin)/(1000*60*60*24)
+
+  const more_than_one_day_dates = (begin, end) => {
+    var dates = []
+    var current
+    var i = 0
+    while (!begin.add(i, "day").isAfter(end)) {
+      current = begin.add(i, "day")
+      dates.push(current)
+      i++
+    }
+    return dates
+  }
 
   return (
   <div className="p-4">
-    <p className="text-4xl mb-4">Today: {today.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">1 Day: {day.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">1 Week: {week.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">1 Month: {month.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">1 Year: {year.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <div className="mx-4"></div>
-    <p className="text-4xl mb-4">d1_b: {d1_b.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">d1_e: {d1_e.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">d2_b: {d2_b.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">d2_e: {d2_e.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">d3_b: {d3_b.format("dddd DD-MM-YYYY HH:mm")}</p>
-    <p className="text-4xl mb-4">d3_e: {d3_e.format("dddd DD-MM-YYYY HH:mm")}</p>
+    <p className="text-4xl">Inizio: {begin.format("dddd D MMMM YYYY HH:mm")}</p>
+    <p className="text-4xl">Fine: {end_today.format("dddd D MMMM YYYY HH:mm")}</p>
+    <p className="text-4xl">Stesso giorno?: {begin.startOf("day").isSame(end_today.startOf("day")) ? "Sì" : "No"}</p>
+
+    <p className="my-4"></p>
+
+    <p className="text-4xl">Inizio: {begin.format("dddd D MMMM YYYY HH:mm")}</p>
+    <p className="text-4xl">Fine: {end_after_today.format("dddd D MMMM YYYY HH:mm")}</p>
+    <p className="text-4xl">Stesso giorno?: {begin.startOf("day").isSame(end_after_today.startOf("day")) ? "Sì" : "No"}</p>
+    <p className="text-4xl">Quanti giorni dura? {durata_in_giorni}</p>
+    <div>
+      {more_than_one_day_dates(begin, end_after_today).map((d, i) => <p className="text-xl">{d.format("D-MM-YYYY")}
+          ({(() => {
+            if (i === 0) return begin.format("HH:mm")
+            else if (i === Math.floor(durata_in_giorni)) return end_after_today.format("HH:mm")
+            else return "Tutto il giorno"
+          })()})
+        </p>)}
+    </div>
   </div>
   )
 }

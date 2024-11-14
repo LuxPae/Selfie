@@ -6,7 +6,6 @@
 - calendario
   > modal più piccolo
 - home 
-  > navbar (quasi finita)
   > renderla carino da vedere
 - profile
   > rifinire
@@ -22,6 +21,9 @@ import Login from "./components/Login.js";
 import Register from "./components/Register.js";
 import Profile from "./components/Profile.js";
 import Calendar from "./components/Calendar";
+
+import Notes from "./components/Notes.js"
+import Pomodoro from "./components/Pomodoro.js"
 
 import Prova from "./components/Prova.js"
 
@@ -45,8 +47,8 @@ const App = () => {
         <Route path="/profile" element={<Profile />}/>
 
         <Route path="/calendar" element={<Calendar/>}/>
-        <Route path="/notes" element={<></>} />
-        <Route path="/pomodoro" element={<></>}/>
+        <Route path="/notes" element={<Notes/>} />
+        <Route path="/pomodoro" element={<Pomodoro/>}/>
 
         <Route path="/prova" element={<Prova/>}/>
       </Routes>
