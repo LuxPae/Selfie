@@ -60,7 +60,7 @@ export default function EventsList({ events }) {
             <div className="pb-2 text-center items-center flex space-x-4 justify-between items-center mx-4 mt-2">
               { !showEventModal && <button
                 onClick={() => { setShowEventModal(true); setSelectedEvent(null) }}
-                className="h-12 w-12 material-symbols-outlined text-white text-4xl border-2 rounded-full hover:bg-white hover:text-green-700"
+                className="h-12 w-12 material-symbols-outlined text-white text-4xl border-2 rounded-full hover:bg-white hover:text-zinc-700"
                 title="crea evento"
               > Add
               </button>}

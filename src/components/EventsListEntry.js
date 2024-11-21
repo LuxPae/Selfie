@@ -3,9 +3,19 @@
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext, useEffect } from "react"
 import { getEventsByRepId, deleteEvents, modifyEvent } from "../API/events.js"
-import { labelsText, labelsBorder, labelsAccent, labelsBackground, labelsTextContrast } from "../scripts/COLORS.js"
+import { labelsText, labelsBorder, labelsAccent, labelsBackground, labelsTextContrast, labelsBorderContrast } from "../scripts/COLORS.js"
 import dayjs from "dayjs"
 
+function EventActionButton({ icon, label, action, otherCss })
+{
+  //TODO l'animazione fa un po' di casino, ovviamente
+  return (
+    <div className="p-px w-fit flex flex-col items-center cursor-pointer text-center rounded-lg hover:scale-110 hover:linear duration-500" onClick={() => action()}>
+      <span className={`text-base material-symbols-outlined -mb-[5px] ${otherCss}`}>{icon}</span>
+      <span className="text-xs">{label}</span>
+    </div>
+  )
+}
 
 export default function EventsListEntry({ event })
 {
@@ -24,7 +34,7 @@ export default function EventsListEntry({ event })
 
   const time_span = () => {
     if (dayjs(event.begin).isSame(dayjs(event.end))) return dayjs(event.begin).format("HH:mm") 
-    else return `${dayjs(event.begin).format("HH:mm")} / ${dayjs(event.end).format("HH:mm")}`
+    else return `${dayjs(event.begin).format("HH:mm")} ~ ${dayjs(event.end).format("HH:mm")}`
   }
 
   const [deletingEvents, setDeletingEvents] = useState(null)
@@ -58,7 +68,7 @@ export default function EventsListEntry({ event })
   const [confirmRepeatedModify, setConfirmRepeatedModify] = useState(false);
 
   const handleEdit = (modifyRepeated) => {
-    setConfirmRepeatedModify(false);
+    setConfirmRepeatedModify(false)
     setSelectedEvent(event)
     setModifyRepeated(modifyRepeated)
     setShowEventModal(true)
@@ -151,90 +161,50 @@ export default function EventsListEntry({ event })
 
   return (
   <>
-  <div className={`snap-center mb-6 flex flex-col max-w-sm ${completed ? labelsText[event.label]+" opacity-50 hover:opacity-100" : "text-white"}`}>
-    <div className={`overflow-hidden rounded mr-4 border-2 ${completed ? "border-transparent" : labelsBorder[event.label] }`}>
-      <div className={`flex relative items-center ${completed ? "justify-start" : "justify-center "+labelsBackground[event.label]}`}>
-        { event.isTask && <>
-          <input type="checkbox" checked={event.isTask.completed} className={`rounded cursor-pointer absolute left-1 w-5 h-5 ${labelsAccent[event.label]}`} onChange={handleCompleteTask}/>
-        </>}
-        <h2 className={`text-center text-xl font-semibold ${completed ? "line-through ml-8" : labelsTextContrast[event.label]}`}>{event.title} {lastsMoreDaysFormat()}</h2>
+  <div className={`snap-center mb-6 flex flex-col max-w-sm rounded ${labelsBackground[event.label]} ${labelsTextContrast[event.label]} ${completed ? "opacity-50 hover:opacity-100" : ""}`}>
+    <div className={`overflow-hidden rounded`}>
+      <div className={`flex relative items-center ${completed ? "border-0" : "border-b-2"} w-full ${labelsBorderContrast[event.label]}`}>
+        { event.isTask && <input type="checkbox" checked={event.isTask.completed} 
+                                 className={`rounded cursor-pointer absolute left-1 w-5 h-5 ${labelsAccent[event.label]}`} onChange={handleCompleteTask}/> }
+        <h2 className={`text-left text-xl font-semibold ${event.isTask ? "ml-8" : "ml-2"} ${completed ? "line-through ml-8" : labelsTextContrast[event.label]}`}>{event.title} {lastsMoreDaysFormat()}</h2>
       </div>
-      { !(event.isTask && completed) && <div className="m-2">
-        <div className={`flex justify-between border-b mt-1`}>
-          <div className="text-left flex items-center pb-[4px]">
-            { event.allDay ?
-              <h1 className="text-xl font-bold">Tutto il giorno</h1>
-              :
-              <>
-              { !event.lastsMoreDays ?
-                <>
-                { event.isTask ?
-                  <h1 className="text-xl font-bold">{dayjs(event.begin).format("HH:mm")}</h1>
-                  :
-                  <h1 className="text-xl font-bold">{time_span()}</h1>
-                }
-                </>
-                :
-                lastsMoreDaysDisplayHour()
-              }
-              </>
-            }
+      { !completed && <div>
+        { !event.allDay && <div className={`pl-2 border-b-2 ${labelsBorderContrast[event.label]}`}>
+          { !event.lastsMoreDays ?
+            <div className="text-base font-semibold">{event.isTask ? dayjs(event.begin).format("HH:mm") : time_span()}</div>
+            :
+            lastsMoreDaysDisplayHour()
+          }
           </div>
-          <div className="space-x-3 flex text-xs items-center cursor-pointer select-none">
-            <div className="flex flex-col items-center">
-              <span className="material-symbols-outlined" onClick={() => alert("TODO")}>content_copy</span>
-              <span>copia</span>
-            </div>
+        }
+        <div className={`border-b-2 ${labelsBorderContrast[event.label]}`}>
+          <div className="flex text-xs justify-around items-center select-none">
             { !confirmRepeatedModify ?
-              <div className="flex flex-col items-center" onClick={clickEdit}>
-                <span className="material-symbols-outlined">create</span>
-                <span>modifica</span>
-              </div>
+              <EventActionButton icon="create" label="modifica" action={clickEdit}/>
               :
               <>
               { event.repeated && 
                 <>
-                <div className="flex flex-col items-center cursor-pointer" onClick={() => setConfirmRepeatedModify(false)}>
-                  <span className="material-symbols-outlined">edit_off</span>
-                  <span>annulla</span>
-                </div>
-                <div className="flex flex-col items-center cursor-pointer" onClick={() => handleEdit(false)}>
-                  <span className="material-symbols-outlined">pages</span>
-                  <span>singol{event.isTask ? "a" : "o"}</span> 
-                </div>
-                <div className="flex flex-col items-center cursor-pointer" onClick={() => handleEdit(true)}>
-                  <span className="material-symbols-outlined">stack_star</span>
-                  <span>ripetut{event.isTask ? "e" : "i"}</span>
-                </div>
+                <EventActionButton icon="edit_off" label="annulla" action={() => setConfirmRepeatedModify(false)}/>
+                <EventActionButton icon="pages" label={"singol"+(event.isTask ? "a" : "o")} action={() => handleEdit(false)}/>
+                <EventActionButton icon="stack_star" label={"ripetut"+(event.isTask ? "e" : "i")} action={() => handleEdit(true)}/>
                 </>
               }
               </>
             }
             { !confirmDelete ?
-              <>
-              <div className="flex flex-col items-center cursor-pointer" onClick={() => { setConfirmDelete(true); setConfirmRepeatedModify(false) }}>
-                <span className="material-symbols-outlined">delete</span>
-                <span>elimina</span>
-              </div>
-              </>
+              <EventActionButton icon="delete" label="elimina" action={() => { setConfirmDelete(true); setConfirmRepeatedModify(false) }}/>
               :
               <>
-              <div className="flex flex-col items-center cursor-pointer" onClick={() => setConfirmDelete(false)}>
-                <span className="material-symbols-outlined">delete_forever</span>
-                <span>annulla</span>
-              </div>
-              <div className="flex flex-col items-center cursor-pointer" onClick={() => handleDelete(false)}>
-                <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count === 1) ? "animate-spin" : ""}`}>check</span>
-                { event.repeated ? <span>singol{event.isTask ? "a" : "o"}</span> : <span>conferma</span> }
-              </div>
-              { event.repeated &&
-                  <div className="flex flex-col items-center cursor-pointer" onClick={() => handleDelete(true)}>
-                    <span className={`material-symbols-outlined ${(deletingEvents && deletingEvents.count > 1) ? "animate-spin" : ""}`}>done_all</span>
-                    <span>ripetut{event.isTask ? "e" : "i"}</span>
-                  </div>
-              }
+              <EventActionButton icon="delete_forever" label="annulla" action={() => setConfirmDelete(false)}/>
+              <EventActionButton icon="check" label={event.repeated ? ("singol"+(event.isTask ? "a" : "o")) : "conferma"} action={() => handleDelete(false)}
+                                 otherCss={(deletingEvents && deletingEvents.count === 1) && "animate-spin"}/>
+              { event.repeated && <EventActionButton icon="done_all" label={"ripetut"+(event.isTask ? "e" : "i")} action={() => handleDelete(true)}
+                                                     otherCss={(deletingEvents && deletingEvents.count > 1) && "animate-spin"}
+              />}
               </>
             }
+            <EventActionButton icon="content_copy" label="copia" action={() => alert("TODO")}/>
           </div>
         </div>
         { event.description && <div style={{scrollbarWidth: "thin"}} className="text-base py-2 border-b overflow-auto">

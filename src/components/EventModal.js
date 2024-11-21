@@ -1,5 +1,6 @@
 //[TODO]
-// - c'è qualche problema con gli orari dell'evento, per qualche motivo
+// - aiut, dunque: le date e gli orari per qualche motivo non si aggiornano nel formdata anche se gli dici setFormData (newBeginDate, newEndDate in particolare)
+// - modificare il giorno di un evento fa esplodere tutto
 import { useContext, useEffect, useState, useMemo } from "react";
 import GlobalContext from "../context/GlobalContext";
 import Button from "../components/Button.js"
@@ -15,7 +16,7 @@ export default function EventModal() {
 
   const roundMinutes = (minutes) => (Math.ceil(minutes/15)*15)%60
 
-  const current_hour_date = (date) => {
+  const current_hour_date = (date, from) => {
     date = dayjs(date)
     var d;
     if (date.startOf("day").isSame(currentDate.startOf("day"))) {
@@ -24,7 +25,9 @@ export default function EventModal() {
       d = selectedDay.add(currentDate.hour(), "hour").add(currentDate.minute(), "minute");
     }
     const minute = roundMinutes(d.minute())
-    return dayjs({day: d.date(), month: d.month(), year: d.year(), hour: d.hour(), minute })
+    const final_date = dayjs({day: d.date(), month: d.month(), year: d.year(), hour: d.hour(), minute })
+    //console.log("Final date "+from, final_date)
+    return final_date
   }
 
   const event_data = () => (selectedEvent || {
@@ -33,8 +36,8 @@ export default function EventModal() {
     label: "white",
     allDay: false,
     isTask: null,
-    begin: current_hour_date(selectedDay),
-    end: current_hour_date(selectedDay).add(1, "hour"),
+    begin: current_hour_date(selectedDay, "formData begin").valueOf(),
+    end: current_hour_date(selectedDay, "formData end").add(1, "hour").valueOf(),
     repeated: false, 
     repeatedData: {
       rep_id: "",
@@ -55,10 +58,8 @@ export default function EventModal() {
 
   const [selectingEndDate, setSelectingEndDate] = useState(false)
   const [newEndDate, setNewEndDate ] = useState((() => {
-    const endDate = selectedEvent ? dayjs(selectedEvent.end) : current_hour_date(selectedDay)
+    const endDate = selectedEvent ? dayjs(selectedEvent.end) : current_hour_date(dayjs(formData.end), "new end date")
     const end_day_obj = { day: endDate.date(), month: endDate.month(), year: endDate.year(), hour: endDate.format("H"), minute: roundMinutes(endDate.format("m")) }
-    //console.log("end date", endDate)
-    //console.log("object", end_day_obj)
     return end_day_obj
   })())
 
@@ -73,111 +74,35 @@ export default function EventModal() {
     return ({ day: endsOnDate.date(), month: endsOnDate.month(), year: endsOnDate.year() })
   })())
 
-  const daysChoice = (from_date) => {
+  const daysInMonthArray = (date) => Array.from({length: dayjs(date).daysInMonth()}, (_, i) => i+1)
+  const endsOnDaysChoice = () => {
     const begin = dayjs(formData.begin)
-
+    const endsOnDate = dayjs({...newEndsOn})
     if (formData.repeated && formData.repeatedData.every === "week") {
       var dates = []
       let i = 1
-      const firstDate = begin.month() === from_date.month() ? begin : from_date.startOf("month")
+      const firstDate = begin.month() === endsOnDate.month() ? begin : endsOnDate.startOf("month")
       let date = firstDate
-      while (!date.isAfter(from_date.endOf("month"))) {
+      while (!date.isAfter(endsOnDate.endOf("month"))) {
         if (date.day() === begin.day()) dates.push(date)
         date = firstDate.add(i, "day")
         i++
       }
       const daysChoice = dates.map(d => d.date())
       return daysChoice
-    } else {
-      const daysInEndsOnMonth = from_date.daysInMonth();
-      var firstDay = begin.month() === from_date.month() ? begin.date() : 1
-      var daysChoice = []
-      for (let i = firstDay; i <= daysInEndsOnMonth; i++) daysChoice.push(i)
-      return daysChoice
-    }
+    } else return daysInMonthArray(endsOnDate)
   }
-  const beginDateDaysChoiceArr = useMemo(() => daysChoice(dayjs({...newBeginDate})), [newBeginDate.month, formData.begin])
-  const endDateDaysChoiceArr = useMemo(() => daysChoice(dayjs({...newEndDate})), [newEndDate.month, formData.begin])
-  const endsOnDaysChoiceArr = useMemo(() => daysChoice(dayjs({...newEndsOn})), [newEndsOn.month, formData.begin, formData.repeatedData.every])
-
-  //TODO finire qui
-  const monthsChoice = (from_date) => {
-    const begin = dayjs(formData.begin)
-    const firstMonth = begin.year() === from_date.year() ? begin.month() : 0
-    if (begin.isSame(from_date)) {
-      const monthsTilTheEnd = 12
-      const monthsChoice = Array.from({ length: monthsTilTheEnd }, (_, i) => i)
-      return monthsChoice
-    }
-    else {
-      if (begin.year() === from_date.year()) {
-        const monthsTilTheEnd = 12 - firstMonth
-        const monthsChoice = Array.from({ length: monthsTilTheEnd }, (_, i) => firstMonth + i)
-        return monthsChoice
-      } else {
-        const monthsTilTheEnd = 12
-        const monthsChoice = Array.from({ length: monthsTilTheEnd }, (_, i) => i)
-        return monthsChoice
-      }
-    }
-
-  }
-  const beginDateMonthsChoiceArr = useMemo(() => monthsChoice(dayjs(formData.begin)), [newBeginDate.year, formData.begin])
-  const endDateMonthsChoiceArr = useMemo(() => monthsChoice(dayjs(formData.end)), [newEndDate.year, formData.begin, formData.end])
-  const endsOnMonthsChoiceArr = useMemo(() => monthsChoice(dayjs(formData.repeatedData.endsOn)), [newEndsOn.year, formData.begin, formData.repeatedData.every])
-
-  const yearsChoice = (from_year) => Array.from({ length: 100 }, (_, i) => from_year + i)
-  const beginDateYearsChoiceArr = useMemo(() => yearsChoice(dayjs(formData.begin).year()), [newBeginDate.year, formData.begin])
-  const endDateYearsChoiceArr = useMemo(() => yearsChoice(dayjs(formData.begin).year()), [newEndDate.year, formData.begin])
-  const endsOnYearsChoiceArr = useMemo(() => yearsChoice(dayjs(formData.end).year()), [newEndsOn.year, formData.begin])
-
-  //TODO c'è qualche problema qui 
-  const hoursChoice = (from_date) => {
-    //console.log("Viene aggiornato????")
-    //console.log("Stesso giorno?", from_date.startOf("day").isSame(dayjs(formData.begin).startOf("day")))
-    if (from_date.startOf("day").isSame(dayjs(formData.begin).startOf("day"))) {
-      const hour = parseInt(from_date.format("H"))
-      const length = 24 - hour
-      return Array.from({ length }, (_, i) => (hour+i).toString().padStart(2, '0'))
-    }
-    else {
-      return Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'))
-    }
-  } 
-  const endDateHoursChoiceArr = useMemo(() => hoursChoice(dayjs(formData.end)), [newBeginDate.hour, newEndDate.hour, formData.begin, formData.end])
-  const beginHourHoursChoiceArr = useMemo(() => hoursChoice(dayjs(formData.begin).startOf("day")), [newBeginDate, formData, newBeginDate.hour, formData.begin])
-
-  const minutesChoice = (from_date) => {
-    const choice = [0, 15, 30, 45]
-    if (from_date.startOf("hour").isSame(dayjs(formData.begin).startOf("hour"))) {
-      const minutes = from_date.format("m")
-      return choice.filter(m => m >= minutes)
-    }
-    else return choice
-  }
-  const beginHourMinutesChoiceArr = useMemo(() => minutesChoice(dayjs(formData.begin).startOf("day")), [newBeginDate.minute, formData.begin])
-  const endDateMinutesChoiceArr = useMemo(() => minutesChoice(dayjs(formData.end)), [newEndDate.minute, formData.begin, formData.end])
+  const endsOnDaysChoiceArray = useMemo(() => endsOnDaysChoice(), [formData.repeatedData.every, newEndsOn.month])
+  const monthsArray = Array.from({length:12}, (_, i) => i)
+  const yearsChoiceArray = Array.from({ length: 100 }, (_, i) => 2000 + i)
+  const hoursChoiceArray = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0'))
+  const minutesChoiceArray = Array.from({length: 4}, (_, i) => (i*15).toString().padStart(2, '0'))
 
   const showIfNotRepeatsEvery = (options) => {
     var result = false
     for (let option of options) result |= formData.repeatedData.every === option
     return !result
   }
-
-  useEffect(() => {
-    if (!duping) {
-      setFormData(event_data())
-      setAllDay(selectedEvent?.allDay || false)
-      setRepeated(selectedEvent?.repeated || false)
-    }
-
-    return () => {
-      setDuping(false)
-    }
-  }, [showEventModal, selectedEvent])
-
-  //TODO serve?
-  //useEffect(() => {}, [selectingBeginDate])
 
   // END DATE
   const resetEndDate = () => {
@@ -198,14 +123,16 @@ export default function EventModal() {
       ...formData,
       end: endDate.valueOf()
     }
+    console.log("new form data (changed end date)", niceFormData(newFormData))
     setFormData(newFormData)
     setSelectingEndDate(false)
   }
 
   const handleChangeNewEndDate = (e) => {
-    const { name, value } = e.target
-    console.log("name: ", name)
-    console.log("value: ", value)
+    const name = e.target.name
+    const value = parseInt(e.target.value)
+    //console.log("name: ", name)
+    //console.log("value: ",value)
     const new_end_date = {
       ...newEndDate,
       [name]: value
@@ -213,6 +140,7 @@ export default function EventModal() {
     console.log(new_end_date)
     setNewEndDate(new_end_date)
   }
+  
   // ~ END DATE
   
   // ENDS ON
@@ -256,7 +184,6 @@ export default function EventModal() {
   // ~ ENDS ON
 
   // BEGIN DATE
-  //TODO
   const setTodayBeginDate = () => {
     const new_begin = { day: currentDate.date(), month: currentDate.month(), year: currentDate.year(), hour: currentDate.hour(), minute: currentDate.minute() }
     setNewBeginDate(new_begin)
@@ -270,7 +197,7 @@ export default function EventModal() {
   }
 
   const resetBeginDate = (from) => {
-    const resettedBegin = current_hour_date(dayjs(formData.begin))
+    const resettedBegin = current_hour_date(dayjs(formData.begin), "reset begin date")
     const newFormData = {
       ...formData,
       begin: resettedBegin.valueOf()
@@ -284,7 +211,7 @@ export default function EventModal() {
 
   const handleConfirmBeginDate = (from) => {
     const beginDate = dayjs({...newBeginDate})
-    console.log(beginDate.format("dddd D MMMM YYYY HH:mm"))
+    //console.log("New begin date:", beginDate.format("dddd D MMMM YYYY HH:mm"))
     const newFormData = {
       ...formData,
       begin: beginDate.valueOf()
@@ -296,13 +223,11 @@ export default function EventModal() {
 
   const handleChangeNewBeginDate = (e) => {
     const { name, value } = e.target
-    console.log("name: ", name)
-    console.log("value: ", value)
     const new_begin = {
       ...newBeginDate,
-      [name]: value
+      [name]: parseInt(value)
     }
-    console.log("New begin:", new_begin)
+    //console.log("New begin:", new_begin)
     setNewBeginDate(new_begin)
   }
   // ~ BEGIN DATE
@@ -319,7 +244,7 @@ export default function EventModal() {
     setSelectingBeginDate(false);
     const newFormData = {
       ...formData,
-      begin: current_hour_date(e.target.value)
+      begin: current_hour_date(e.target.value, "change begin date")
     }
     setFormData(newFormData)
   }
@@ -364,7 +289,7 @@ export default function EventModal() {
     setFormData(newFormData)
   }
 
-  //TODO
+  //TODO validator for time
   const handleChangeTime = (e) => {
     //console.log(e.target.name, e.target.value)
     const [ hour, minute ] = e.target.value.split(':')
@@ -468,12 +393,10 @@ export default function EventModal() {
     if (!doesEventLastsMoreThanOneDay(event)) return null
     const day_in_ms = 1000*60*60*24
     const durata_in_giorni = (dayjs(event.end).startOf("day").diff(dayjs(event.begin).startOf("day"))/day_in_ms)+1
-    //console.log("Dura "+durata_in_giorni+" giorni")
     const info = {
       num: 1,
       total: durata_in_giorni
     }
-    //console.log("lastsMoreDays info", info)
     return info
   }
 
@@ -528,7 +451,7 @@ export default function EventModal() {
       try {
         if (modifyRepeated) {
           const modified_events = await modifyEvent(event, user, true)
-          //console.log(`modifying ${modified_events.length} ${type}s`, modified_events)
+          console.log(`modifying ${modified_events.length} ${type}s`, modified_events)
           if (modified_events.length === 0) throw new Error(`non è stato possibile modificare ${types_art}`)
           else {
             allEvents_modifyEvents(modified_events)
@@ -548,14 +471,12 @@ export default function EventModal() {
       }
     } else {
       try {
-        // TODO ora devo fare gli eventi da più giorni
         var created_events = null;
         if (!event.repeated) {
           let e = await createSingleEvent(event, user)
           if (e) created_events = [e]
         }
         else created_events = await createRepeatedEvent(event, user)
-        //
         if (!created_events) {
           if (event.repeated) throw new Error(`non è stato possibile creare ${types_art}`);
           else throw new Error(`non è stato possibile creare ${type_art}`);
@@ -595,15 +516,47 @@ export default function EventModal() {
 
   }
 
-  const formatEndDate = () => {
+  //TODO cheat (perché per qualche motivo astrale end date cambia nel formdata, ma qui non ne vuole sapere proprio)
+  // e infatti non funzionaaaaAAAAAAA
+  const formattedEndDate = useMemo(() => {
     const begin = dayjs(formData.begin)
     const end = dayjs(formData.end)
-    var formattedDate;
+    var formattedDate = "";
     if (end.startOf("day").isSame(begin.startOf("day"))) formattedDate = "Lo stesso giorno"
     else formattedDate = end.format("dddd D MMMM YYYY")
-    formattedDate += " alle "+end.format("HH:mm")
+    formattedDate += " alle "+dayjs({...newEndDate}).format("HH:mm")
     return formattedDate
+  }, [formData.end])
+
+  useEffect(() => {
+    //TODO perché l'avevo messo?
+    if (!duping /*&& !formData*/) {
+      setFormData(event_data())
+      setAllDay(selectedEvent?.allDay || false)
+      setRepeated(selectedEvent?.repeated || false)
+    }
+
+    return () => {
+      setDuping(false)
+    }
+  }, [showEventModal, selectedEvent, setSelectedEvent, selectingBeginDate, selectingEndDate ])
+
+  const niceFormData = (otherFormData) => {
+      const formData = otherFormData || formData
+    return {
+      ...formData,
+      begin: dayjs(formData.begin).format("dddd D MMMM YYYY HH:mm"),
+      end: dayjs(formData.end).format("dddd D MMMM YYYY HH:mm")
+    }
   }
+  //useEffect(() => {
+  //  const niceFormData = {
+  //    ...formData,
+  //    begin: dayjs(formData.begin).format("dddd D MMMM YYYY HH:mm"),
+  //    end: dayjs(formData.end).format("dddd D MMMM YYYY HH:mm")
+  //  }
+  //  console.log("Formdata:", niceFormData)
+  //}, [formData])
 
   return (
     <div className="h-full max-w-auto flex justify-right items-right">
@@ -625,15 +578,16 @@ export default function EventModal() {
                   <div className="border-b pb-2 mb-1 flex items-center space-x-2">
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
                             name="day" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.day}>
-                      { beginDateDaysChoiceArr.map(day => <option key={day} value={day}>{day}</option>) }
+                      {daysInMonthArray(dayjs({...newBeginDate})).map(day => <option key={day} value={day}>{day}</option>)}
                     </select>
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                             name="month" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.month}>
-                      { beginDateMonthsChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                      { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                     </select>
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                             name="year" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.year}>
-                      { beginDateYearsChoiceArr.map(year => <option key={year} value={year}>{year}</option>) }
+                      {/* beginDateYearsChoiceArr.map(year => <option key={year} value={year}>{year}</option>) */}
+                      { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                     </select>
                   </div>
                   <div className="flex items-center justify-center">
@@ -669,12 +623,12 @@ export default function EventModal() {
                 <div className="flex items-center space-x-2">
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
                           name="hour" onChange={handleChangeNewBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
-                    { beginHourHoursChoiceArr.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                    { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
                   </select>
                   <p>:</p>
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                           name="minute" onChange={handleChangeNewBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
-                    { beginHourMinutesChoiceArr.map(minute => <option key={minute} value={minute}>{minute.toString().padStart(2, '0')}</option>) }
+                    { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
                   </select>
                   {/* TODO: handleChangeTime
                       <input className={`mb-4 mt-2 px-2 py-1 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded`} 
@@ -698,27 +652,28 @@ export default function EventModal() {
                       <span>il </span>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
                               name="day" onChange={handleChangeNewEndDate} defaultValue={newEndDate.day}>
-                        { endDateDaysChoiceArr.map(day => <option key={day} value={day}>{day}</option>) }
+                        { daysInMonthArray(dayjs({...newEndDate})).map(day => <option key={day} value={day}>{day}</option>) }
                       </select>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                               name="month" onChange={handleChangeNewEndDate} defaultValue={newEndDate.month}>
-                        { endDateMonthsChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                        {/* endDateMonthsChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) */}
+                        { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                       </select>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                               name="year" onChange={handleChangeNewEndDate} defaultValue={newEndDate.year}>
-                        { endDateYearsChoiceArr.map(year => <option key={year} value={year}>{year}</option>) }
+                        { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                       </select>
                     </div>
                     <div className="flex items-center space-x-2">
                       <p> alle </p>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="hour" onChange={handleChangeNewEndDate} defaultValue={newEndDate.hour}>
-                        { endDateHoursChoiceArr.map(hour => <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}</option>) }
+                              name="hour" onChange={handleChangeNewEndDate} defaultValue={newEndDate.hour/*dayjs(formData.end).hour()*/}>
+                        { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
                       </select>
                       <p>:</p>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                               name="minute" onChange={handleChangeNewEndDate} defaultValue={newEndDate.minute}>
-                        { endDateMinutesChoiceArr.map(minute => <option key={minute} value={minute}>{minute.toString().padStart(2, '0')}</option>) }
+                        { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
                       </select>
                     </div>
                   </div>
@@ -729,7 +684,7 @@ export default function EventModal() {
                   </div>
                 </div>
                 :
-                <Button click={() => setSelectingEndDate(true)} label={formatEndDate()} otherCss="mb-4"/>
+                <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
               }
             </>}
           </div>}
@@ -780,18 +735,18 @@ export default function EventModal() {
                             { showIfNotRepeatsEvery(["month", "year"]) && 
                               <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
                                       name="day" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.day}>
-                                { endsOnDaysChoiceArr.map(day => <option key={day} value={day}>{day}</option>) }
+                                { endsOnDaysChoiceArray.map(day => <option key={day} value={day}>{day}</option>) }
                               </select>
                             }
                             { showIfNotRepeatsEvery(["year"]) &&
                               <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                                       name="month" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.month}>
-                                { endsOnMonthsChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                                { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                               </select>
                             }
                             <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
                                     name="year" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.year}>
-                              { endsOnYearsChoiceArr.map(year => <option key={year} value={year}>{year}</option>) }
+                              { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                             </select>
                           </div>
                           <div className="flex items-center justify-center">

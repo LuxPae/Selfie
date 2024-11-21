@@ -42,7 +42,6 @@ const Calendar = () => {
   }
 
   useEffect(() => {
-    console.log("lo so che sei tu")
     if(!user) navigate("/")
 
     allEvents_initialize()

@@ -1,4 +1,4 @@
-import { useState, useReducer, useEffect } from "react"
+import { useState, useReducer } from "react"
 import dayjs from "dayjs"
 import GlobalContext from "./GlobalContext.js"
 import { getAllEvents } from "../API/events.js"
@@ -36,33 +36,17 @@ export default function ContextWrapper({ children })
 
   const more_than_one_day_dates = (begin, end, total) => {
     var dates = []
-    var i = 0
-    //while (!begin.add(i, "day").isAfter(end)) {
-    //  const current = {
-    //    begin: (() => {
-    //      if (i == 0) return begin
-    //      else return begin.add(i, "day").startOf("day")
-    //    })(),
-    //    end: (() => {
-    //      if (i == total-1) return end
-    //      else return begin.add(i, "day").endOf("day")
-    //    })(),
-    //    allDay: (() => i != 0 && i != total-1)()
-    //  }
-    //  dates.push(current)
-    //  i++
-    //}
     for (let i = 0; i < total; i++) {
       const current = {
         begin: (() => {
-          if (i == 0) return begin
-          else return begin.add(i, "day").startOf("day")
+          if (i === 0) return begin.valueOf()
+          else return begin.add(i, "day").startOf("day").valueOf()
         })(),
         end: (() => {
-          if (i == total-1) return end
-          else return begin.add(i, "day").endOf("day")
+          if (i === total-1) return end.valueOf()
+          else return begin.add(i, "day").endOf("day").valueOf()
         })(),
-        allDay: (() => i != 0 && i != total-1)()
+        allDay: (() => i !== 0 && i !== total-1)()
       }
       dates.push(current)
     }
@@ -72,7 +56,7 @@ export default function ContextWrapper({ children })
   const [multipleDaysEvents, setMultipleDaysEvents] = useState([])
   const clearMultipleEvents = (events) => {
     setMultipleDaysEvents([])
-    const cleared_events = events.filter(e => !e.lastsMoreDays || e.lastsMoreDays?.num == 1)
+    const cleared_events = events.filter(e => !e.lastsMoreDays || e.lastsMoreDays?.num === 1)
     return cleared_events
   }
   const createMultipleDaysEvents = (events) => {
@@ -82,20 +66,20 @@ export default function ContextWrapper({ children })
       if (event.lastsMoreDays) {
         md_events.push({...event})
         const dates = more_than_one_day_dates(dayjs(event.begin), dayjs(event.end), event.lastsMoreDays.total)
-        if (dates.length != event.lastsMoreDays.total) console.error("What the HEEEEEELL");
+        if (dates.length !== event.lastsMoreDays.total) console.error("What the HEEEEEELL");
         //console.log("dates", dates)
         event = {
           ...event,
-          begin: dates[0].begin,
-          end: dates[0].end,
+          begin: dates[0].begin.valueOf(),
+          end: dates[0].end.valueOf(),
           allDay: dates[0].allDay,
         }
         //console.log("First day", event)
         for (let i = 1; i < event.lastsMoreDays.total; i++) {
           let e = {
             ...event,
-            begin: dates[i].begin,
-            end: dates[i].end,
+            begin: dates[i].begin.valueOf(),
+            end: dates[i].end.valueOf(),
             allDay: dates[i].allDay,
             lastsMoreDays: {
               num: i+1,
@@ -103,7 +87,7 @@ export default function ContextWrapper({ children })
             }
           }
           const index = all_events.findIndex(evt => evt._id === e._id && evt.lastsMoreDays.num === e.lastsMoreDays.num)
-          if (index == -1) all_events.push(e)
+          if (index === -1) all_events.push(e)
         }
       }
     }
@@ -154,8 +138,8 @@ export default function ContextWrapper({ children })
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
 
-  const [ newUser, setNewUser ] = useState(null);
   //TODO poi da togliere, forse
+  //const [ newUser, setNewUser ] = useState(null);
   const [ newFullName, setNewFullName ] = useState("");
   const [ newUsername, setNewUsername ] = useState("");
   const [ newPicture, setNewPicture ] = useState("");
