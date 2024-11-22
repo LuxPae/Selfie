@@ -1,6 +1,5 @@
-//[TODO]
-// - aiut, dunque: le date e gli orari per qualche motivo non si aggiornano nel formdata anche se gli dici setFormData (newBeginDate, newEndDate in particolare)
-// - modificare il giorno di un evento fa esplodere tutto
+//[TODO] DAI CI SONO QUASIIIII
+// - quando si modifica beginDate bisogna modificare anche endDate che sarà il giorno di begin date, ma all'ora a cui è attualmente
 import { useContext, useEffect, useState, useMemo } from "react";
 import GlobalContext from "../context/GlobalContext";
 import Button from "../components/Button.js"
@@ -9,24 +8,23 @@ import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
 import { monthsNames } from "../scripts/CONSTANTS.js"
 
-const labelsClasses = [...Object.values(colors.labelsBackground)]
-
 export default function EventModal() {
   var { user, showEventModal, setShowEventModal, selectedDay, setSelectedDay, currentDate, allEvents_createEvents, allEvents_modifyEvents, selectedEvent, setSelectedEvent, notify, modifyRepeated, multipleDaysEvents } = useContext(GlobalContext)
 
   const roundMinutes = (minutes) => (Math.ceil(minutes/15)*15)%60
 
-  const current_hour_date = (date, from) => {
+  //TODO il nome non mi piace
+  const current_hour_date = (date, begin) => {
+    const relativeBeginDate = begin ? dayjs(begin) : currentDate
     date = dayjs(date)
     var d;
-    if (date.startOf("day").isSame(currentDate.startOf("day"))) {
+    if (date.startOf("day").isSame(relativeBeginDate.startOf("day"))) {
       d = dayjs(date).startOf("minute");
     } else {
-      d = selectedDay.add(currentDate.hour(), "hour").add(currentDate.minute(), "minute");
+      d = date.startOf("day").add(relativeBeginDate.hour(), "hour").add(relativeBeginDate.minute(), "minute");
     }
     const minute = roundMinutes(d.minute())
     const final_date = dayjs({day: d.date(), month: d.month(), year: d.year(), hour: d.hour(), minute })
-    //console.log("Final date "+from, final_date)
     return final_date
   }
 
@@ -36,8 +34,8 @@ export default function EventModal() {
     label: "white",
     allDay: false,
     isTask: null,
-    begin: current_hour_date(selectedDay, "formData begin").valueOf(),
-    end: current_hour_date(selectedDay, "formData end").add(1, "hour").valueOf(),
+    begin: current_hour_date(selectedDay).valueOf(),
+    end: current_hour_date(selectedDay).add(1, "hour").valueOf(),
     repeated: false, 
     repeatedData: {
       rep_id: "",
@@ -49,25 +47,20 @@ export default function EventModal() {
   })
   const [formData, setFormData] = useState(event_data())
 
-  const [newBeginDate, setNewBeginDate ] = useState((() => {
-    const beginDate = selectedEvent ? dayjs(selectedEvent) : dayjs(selectedDay)
-    return ({ day: beginDate.date(), month: beginDate.month(), year: beginDate.year(), hour: beginDate.format("H"), minute: roundMinutes(beginDate.format("m")) })
-  })())
+  const [oldBeginDate, setOldBeginDate] = useState(dayjs(formData.begin))
+
   const [selectingBeginDate, setSelectingBeginDate] = useState(false)
   const [selectingBeginHour, setSelectingBeginHour] = useState(false)
 
+  const [oldEndDate, setOldEndDate] = useState(dayjs(formData.end))
   const [selectingEndDate, setSelectingEndDate] = useState(false)
-  const [newEndDate, setNewEndDate ] = useState((() => {
-    const endDate = selectedEvent ? dayjs(selectedEvent.end) : current_hour_date(dayjs(formData.end), "new end date")
-    const end_day_obj = { day: endDate.date(), month: endDate.month(), year: endDate.year(), hour: endDate.format("H"), minute: roundMinutes(endDate.format("m")) }
-    return end_day_obj
-  })())
 
   const [isCreatingOrModifying, setIsCreatingOrModifying] = useState(false)
   const [duping, setDuping] = useState(false)
   const [allDay, setAllDay] = useState(false);
   const [repeated, setRepeated] = useState(false);
 
+  const [oldEndsOnDate, setOldEndsOnDate] = useState(dayjs(formData.repeatedData.endsOn))
   const [selectingEndsOn, setSelectingEndsOn] = useState(false)
   const [newEndsOn, setNewEndsOn ] = useState((() => {
     const endsOnDate = selectedEvent ? dayjs(selectedEvent) : dayjs(selectedDay)
@@ -105,42 +98,50 @@ export default function EventModal() {
   }
 
   // END DATE
-  const resetEndDate = () => {
-    const resettedEndDate = dayjs(formData.begin).add(1, "hour")
+  const resetEndDate = (from) => {
+    const resettedDate = current_hour_date(dayjs(formData.begin), dayjs(formData.begin)).add(1, "hour")
+    console.log("resetted end date:", resettedDate.format("dddd D MMMM YYYY HH:mm"))
+    var newEndDate = { day: resettedDate.date(), month: resettedDate.month(), year: resettedDate.year(), hour: resettedDate.hour(), minute: resettedDate.minute() }
+    newEndDate = dayjs({...newEndDate})
     const newFormData = {
       ...formData,
-      end: resettedEndDate.valueOf()
+      end: newEndDate.valueOf()  
     }
-    const new_end_date = { day: resettedEndDate.date(), month: resettedEndDate.month(), year: resettedEndDate.year(), hour: resettedEndDate.hour(), minute: resettedEndDate.minute() }
-    setNewEndDate(new_end_date)
     setFormData(newFormData)
-    setSelectingEndDate(false)
-  }
-  const handleConfirmEndDate = () => {
-    const endDate = dayjs({...newEndDate})
-    console.log(endDate.format("dddd D MMMM YYYY HH:mm"))
-    const newFormData = {
-      ...formData,
-      end: endDate.valueOf()
-    }
-    console.log("new form data (changed end date)", niceFormData(newFormData))
-    setFormData(newFormData)
+    setOldEndDate(dayjs(newFormData.end))
     setSelectingEndDate(false)
   }
 
-  const handleChangeNewEndDate = (e) => {
-    const name = e.target.name
-    const value = parseInt(e.target.value)
-    //console.log("name: ", name)
-    //console.log("value: ",value)
-    const new_end_date = {
-      ...newEndDate,
-      [name]: value
-    }
-    console.log(new_end_date)
-    setNewEndDate(new_end_date)
+  const handleConfirmEndDate = () => {
+    setOldEndDate(dayjs(formData.end))
+    setSelectingEndDate(false)
   }
-  
+
+  const handleChangeEndDate = (e) => {
+    var { name, value } = e.target
+    setOldEndDate(dayjs(formData.end))
+    const end = dayjs(formData.end)
+    var newEndDate = { day: end.date(), month: end.month(), year: end.year(), hour: end.hour(), minute: end.minute() }
+    newEndDate[name] = parseInt(value)
+    newEndDate = dayjs({...newEndDate})
+    const newFormData = {
+      ...formData,
+      end: newEndDate.valueOf()  
+    }
+    setFormData(newFormData)
+  }
+
+  const cancelEndDate = () => {
+    const oldFormDataEnd = dayjs(formData.end)
+    console.log("resetted end:", oldFormDataEnd)
+    const newFormData = {
+      ...formData,
+      end: oldEndDate.valueOf()
+    }
+    setOldEndDate(oldFormDataEnd)
+    setFormData(newFormData)
+    setSelectingEndDate(false)
+  }
   // ~ END DATE
   
   // ENDS ON
@@ -185,50 +186,59 @@ export default function EventModal() {
 
   // BEGIN DATE
   const setTodayBeginDate = () => {
-    const new_begin = { day: currentDate.date(), month: currentDate.month(), year: currentDate.year(), hour: currentDate.hour(), minute: currentDate.minute() }
-    setNewBeginDate(new_begin)
-    const beginDate = dayjs({...new_begin})
+    setOldBeginDate(dayjs(formData.begin))
     const newFormData = {
       ...formData,
-      begin: beginDate.valueOf()
+      begin: current_hour_date(currentDate).valueOf() 
     }
     setFormData(newFormData)
     setSelectingBeginDate(false)
   }
 
-  const resetBeginDate = (from) => {
-    const resettedBegin = current_hour_date(dayjs(formData.begin), "reset begin date")
+  const cancelBeginDate = (from) => {
+    const oldFormDataBegin = dayjs(formData.begin)
     const newFormData = {
       ...formData,
-      begin: resettedBegin.valueOf()
+      begin: oldBeginDate.valueOf()
     }
-    const new_begin = { day: resettedBegin.date(), month: resettedBegin.month(), year: resettedBegin.year(), hour: resettedBegin.hour(), minute: resettedBegin.minute() }
-    setNewBeginDate(new_begin)
+    setOldBeginDate(oldFormDataBegin)
     setFormData(newFormData)
     if (from === "date") setSelectingBeginDate(false)
     else setSelectingBeginHour(false)
   }
 
   const handleConfirmBeginDate = (from) => {
-    const beginDate = dayjs({...newBeginDate})
-    //console.log("New begin date:", beginDate.format("dddd D MMMM YYYY HH:mm"))
-    const newFormData = {
-      ...formData,
-      begin: beginDate.valueOf()
-    }
-    setFormData(newFormData)
+    setOldBeginDate(dayjs(formData.begin))
     if (from === "date") setSelectingBeginDate(false)
     else setSelectingBeginHour(false)
   }
 
-  const handleChangeNewBeginDate = (e) => {
-    const { name, value } = e.target
-    const new_begin = {
-      ...newBeginDate,
-      [name]: parseInt(value)
+  const handleChangeBeginDate = (e) => {
+    var { name, value } = e.target
+    setOldBeginDate(dayjs(formData.begin))
+    const begin = dayjs(formData.begin)
+    var newBeginDate = { day: begin.date(), month: begin.month(), year: begin.year(), hour: begin.hour(), minute: begin.minute() }
+    newBeginDate[name] = parseInt(value)
+    newBeginDate = dayjs({...newBeginDate})
+    const newFormData = {
+      ...formData,
+      begin: newBeginDate.valueOf()  
     }
-    //console.log("New begin:", new_begin)
-    setNewBeginDate(new_begin)
+    setFormData(newFormData)
+  }
+
+  const resetBeginHour = () => {
+    const begin = dayjs(formData.begin)
+    const resettedDate = current_hour_date(selectedDay)
+    var newBeginDate = { day: begin.date(), month: begin.month(), year: begin.year(), hour: resettedDate.hour(), minute: resettedDate.minute() }
+    newBeginDate = dayjs({...newBeginDate})
+    const newFormData = {
+      ...formData,
+      begin: newBeginDate.valueOf()  
+    }
+    setFormData(newFormData)
+    setOldBeginDate(dayjs(newFormData.begin))
+    setSelectingBeginHour(false)
   }
   // ~ BEGIN DATE
 
@@ -236,33 +246,6 @@ export default function EventModal() {
     const newFormData = {
       ...formData,
       [e.target.name]: e.target.value
-    }
-    setFormData(newFormData)
-  }
-
-  const handleChangeBeginDate = (e) => {
-    setSelectingBeginDate(false);
-    const newFormData = {
-      ...formData,
-      begin: current_hour_date(e.target.value, "change begin date")
-    }
-    setFormData(newFormData)
-  }
-  
-  const handleChangeBeginHour = (e) => {
-    setSelectingBeginHour(false);
-    const newFormData = {
-      ...formData,
-      begin: dayjs(e.target.value).startOf("minute")
-    }
-    setFormData(newFormData)
-  }
-
-  const handleChangeEndDate = (e) => {
-    setSelectingEndDate(false);
-    const newFormData = {
-      ...formData,
-      end: dayjs(e.target.value).startOf("minute")
     }
     setFormData(newFormData)
   }
@@ -360,7 +343,7 @@ export default function EventModal() {
   const handleChangeLabel = (new_label) => {
     const newFormData = {
       ...formData,
-      label: new_label.split("-")[1],
+      label: new_label
     }
     setFormData(newFormData)
   }
@@ -516,21 +499,18 @@ export default function EventModal() {
 
   }
 
-  //TODO cheat (perché per qualche motivo astrale end date cambia nel formdata, ma qui non ne vuole sapere proprio)
-  // e infatti non funzionaaaaAAAAAAA
   const formattedEndDate = useMemo(() => {
     const begin = dayjs(formData.begin)
     const end = dayjs(formData.end)
     var formattedDate = "";
     if (end.startOf("day").isSame(begin.startOf("day"))) formattedDate = "Lo stesso giorno"
     else formattedDate = end.format("dddd D MMMM YYYY")
-    formattedDate += " alle "+dayjs({...newEndDate}).format("HH:mm")
+    formattedDate += " alle "+end.format("HH:mm")
     return formattedDate
-  }, [formData.end])
+  }, [formData.end, formData.begin])
 
   useEffect(() => {
-    //TODO perché l'avevo messo?
-    if (!duping /*&& !formData*/) {
+    if (!duping && !formData) {
       setFormData(event_data())
       setAllDay(selectedEvent?.allDay || false)
       setRepeated(selectedEvent?.repeated || false)
@@ -577,23 +557,22 @@ export default function EventModal() {
               { selectingBeginDate ? <div className="flex flex-col items-center mt-2">
                   <div className="border-b pb-2 mb-1 flex items-center space-x-2">
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                            name="day" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.day}>
-                      {daysInMonthArray(dayjs({...newBeginDate})).map(day => <option key={day} value={day}>{day}</option>)}
+                            name="day" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).date()}>
+                      {daysInMonthArray(dayjs(formData.begin)).map(day => <option key={day} value={day}>{day}</option>)}
                     </select>
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="month" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.month}>
+                            name="month" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).month()}>
                       { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                     </select>
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="year" onChange={handleChangeNewBeginDate} defaultValue={newBeginDate.year}>
-                      {/* beginDateYearsChoiceArr.map(year => <option key={year} value={year}>{year}</option>) */}
+                            name="year" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).year()}>
                       { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                     </select>
                   </div>
                   <div className="flex items-center justify-center">
                     <button type="button" className="material-symbols-outlined" onClick={() => handleConfirmBeginDate("date")}>check</button>
                     <div className="p-1 px-4"><Button click={setTodayBeginDate} label="Oggi"/></div>
-                    <button type="button" className="material-symbols-outlined" onClick={() => setSelectingBeginDate(false)}>close</button>
+                    <button type="button" className="material-symbols-outlined" onClick={() => cancelBeginDate("date")}>close</button>
                   </div>
                 </div>
                 :
@@ -622,23 +601,19 @@ export default function EventModal() {
             { selectingBeginHour ? <div className="flex flex-col items-center mb-4">
                 <div className="flex items-center space-x-2">
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                          name="hour" onChange={handleChangeNewBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
+                          name="hour" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
                     { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
                   </select>
                   <p>:</p>
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                          name="minute" onChange={handleChangeNewBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
+                          name="minute" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
                     { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
                   </select>
-                  {/* TODO: handleChangeTime
-                      <input className={`mb-4 mt-2 px-2 py-1 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded`} 
-                       type="time" step="900" min="06:00" max="23:00" name="begin" value={dayjs(formData.begin).format("HH:mm")} onChange={handleChangeTime}
-                  />*/}
                 </div>
                 <div className="mt-2 pt-1 border-t flex items-center justify-center">
                   <button type="button" className="material-symbols-outlined" onClick={handleConfirmBeginDate}>check</button>
-                  <div className="p-1 px-4"><Button click={resetBeginDate} label="Reset"/></div>
-                  <button type="button" className="material-symbols-outlined" onClick={() => setSelectingBeginHour(false)}>close</button>
+                  <div className="p-1 px-4"><Button click={resetBeginHour} label="Reset"/></div>
+                  <button type="button" className="material-symbols-outlined" onClick={cancelBeginDate}>close</button>
                 </div>
               </div>
               :
@@ -651,28 +626,27 @@ export default function EventModal() {
                     <div className="flex items-center mb-2 space-x-2">
                       <span>il </span>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                              name="day" onChange={handleChangeNewEndDate} defaultValue={newEndDate.day}>
-                        { daysInMonthArray(dayjs({...newEndDate})).map(day => <option key={day} value={day}>{day}</option>) }
+                              name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
+                        { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
                       </select>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="month" onChange={handleChangeNewEndDate} defaultValue={newEndDate.month}>
-                        {/* endDateMonthsChoiceArr.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) */}
+                              name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
                         { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                       </select>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="year" onChange={handleChangeNewEndDate} defaultValue={newEndDate.year}>
+                              name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
                         { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                       </select>
                     </div>
                     <div className="flex items-center space-x-2">
                       <p> alle </p>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="hour" onChange={handleChangeNewEndDate} defaultValue={newEndDate.hour/*dayjs(formData.end).hour()*/}>
+                              name="hour" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).hour()}>
                         { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
                       </select>
                       <p>:</p>
                       <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="minute" onChange={handleChangeNewEndDate} defaultValue={newEndDate.minute}>
+                              name="minute" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).minute()}>
                         { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
                       </select>
                     </div>
@@ -680,7 +654,7 @@ export default function EventModal() {
                   <div className="flex items-center justify-center">
                     <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndDate}>check</button>
                     <div className="p-1 px-4"><Button click={resetEndDate} label="Reset"/></div>
-                    <button type="button" className="material-symbols-outlined" onClick={() => setSelectingEndDate(false)}>close</button>
+                    <button type="button" className="material-symbols-outlined" onClick={cancelEndDate}>close</button>
                   </div>
                 </div>
                 :
@@ -775,16 +749,13 @@ export default function EventModal() {
             className={`rounded p-2 my-3 mb-4 min-w-[400px] min-h-[90px] text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
             name="description" placeholder="Descrizione" value={formData.description} onChange={handleChange} />
           <div className="flex items-center justify-center gap-x-2">
-            {labelsClasses.map((label, i) => (
+            {colors.labelsNames.map((label, i) => (
               <span key={i}
                 onClick={() => handleChangeLabel(label)}
                 tabIndex="0"
                 onKeyPress={(e) => { if (e.key === ' ') handleChangeLabel(label) }}
-                className={`${label} w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}>
-                {formData.label === label.split('-')[1] &&
-                  <span className={`material-icons-outlined text-black text-base`}>check</span>
-                }
-
+                className={`${colors.labelsBackground[label]} w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}>
+                { formData.label === label && <span className={`material-icons-outlined text-black text-base`}>check</span> }
               </span>
             ))}
           </div>

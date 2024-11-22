@@ -262,14 +262,14 @@ const HomeVanilla = () => {
     let events_div = document.getElementById("events")
     events_div.replaceChildren()
     events = allEvents.filter(e => !e.isTask)
-    if (events.length === 0) {
-      events_div.innerHTML = "<p>Non ci sono eventi per i prossimi giorni</p>"
-      return
-    }
     const now = currentDate.valueOf()
     const neigh_events = events.filter(e => e.begin >= now || isNowBetweenDate(e))
     const sorted_events = neigh_events.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
     const limited_events = sorted_events.slice(0, MAX_EVENTS_NUM)
+    if (limited_events.length === 0) {
+      events_div.innerHTML = "<p>Non ci sono eventi per i prossimi giorni</p>"
+      return
+    }
     for (let event of limited_events) {
       events_div.innerHTML += EventTemplate(event)
     }
@@ -284,15 +284,15 @@ const HomeVanilla = () => {
     let tasks_div = document.getElementById("tasks")
     tasks_div.replaceChildren()
     tasks = allEvents.filter(e => e.isTask)
-    if (tasks.length === 0) {
-      tasks_div.innerHTML = "<p>Non ci sono attività per i prossimi giorni</p>"
-      return
-    }
     const now = currentDate.valueOf()
     const neigh_tasks = tasks.filter(t => t.begin >= now || isNowBetweenDate(t))
     const sorted_tasks = neigh_tasks.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
     const not_completed_tasks = sorted_tasks.filter(t => !t.isTask.completed)
     const limited_tasks = not_completed_tasks.slice(0, MAX_EVENTS_NUM)
+    if (limited_tasks.length === 0) {
+      tasks_div.innerHTML = "<p>Non ci sono attività per i prossimi giorni</p>"
+      return
+    }
     for (let task of limited_tasks) {
       tasks_div.innerHTML += TaskTemplate(task)
     }
