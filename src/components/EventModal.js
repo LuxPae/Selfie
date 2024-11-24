@@ -1,5 +1,6 @@
 //[TODO] DAI CI SONO QUASIIIII
-// - quando si modifica beginDate bisogna modificare anche endDate che sarà il giorno di begin date, ma all'ora a cui è attualmente
+// - newEndsOn come gli altri
+// - devo fare le notifiche?
 import { useContext, useEffect, useState, useMemo } from "react";
 import GlobalContext from "../context/GlobalContext";
 import Button from "../components/Button.js"
@@ -272,28 +273,32 @@ export default function EventModal() {
     setFormData(newFormData)
   }
 
-  //TODO validator for time
-  const handleChangeTime = (e) => {
-    //console.log(e.target.name, e.target.value)
-    const [ hour, minute ] = e.target.value.split(':')
-    const current_date = dayjs(e.target.name === "begin" ? formData.begin : formData.end);
-    const new_date = dayjs({ year: current_date.year(), month: current_date.month(), day: current_date.date(), hour, minute });
-    //console.log("current_date", current_date);
-    //console.log("new_date", new_date);
-    const newFormData = { ...formData };
-    if (e.target.name === "begin") newFormData.begin = new_date;
-    else newFormData.end = new_date;
-    // TODO c'è la funzione diff di dayjs
-    const duration = Math.floor((dayjs(newFormData.end).subtract(dayjs(newFormData.begin))).valueOf() / (1000*60*60));
-    //console.log(duration);
-    if (duration < 0) {
-      notify("error", "L'ora di fine deve essere successiva all'ora di inizio")
-    } else {
-      setFormData(newFormData);
-      //console.log(newFormData);
-    }
-    setSelectingBeginHour(false);
+  // VALIDATORS
+    //TODO
+  const [error_titleLength_prova, setError_titleLength_prova] = useState("")
+  const validate_titleLength_prova = () => formData.title.length > 10
+
+  const validate_date = () => {
+    const begin = dayjs(formData.begin)
+    const end = dayjs(formData.end)
+    const diff = end.diff(begin)
+    return diff >= 0
   }
+
+  const validate_form = () => {
+    if (!validate_titleLength_prova()) {
+      let tipo = (selectedEvent ? "modifica " : "creazione ")+(formData.isTask ? "attività" : "evento");
+      notify("error", tipo+" - inserisci il titolo");
+      setError_titleLength_prova("AAAAAAAAAAA TODO")
+      return false
+    }
+    else if (!validate_date()) {
+      notify("error", "L'ora di fine deve essere successiva all'ora di inizio")
+      return false
+    }
+    return true
+  }
+  // ~ VALIDATORS
 
   const handleChangeRepeatedEvery = (e) => {
     const newFormData = {
@@ -384,17 +389,13 @@ export default function EventModal() {
   }
 
   const handleSubmit = async (e) => {
-    setIsCreatingOrModifying(true);
-    if (!formData.title) {
-      let tipo = (selectedEvent ? "modifica " : "creazione ")+(formData.isTask ? "attività" : "evento");
-      notify("error", tipo+" - inserisci il titolo");
+    if (!validate_form()) {
+      alert("Form non valido")
       return;
-    }
-    // if (!validateForm(formData)) {
-    //   notify("error", "...")
-    //   return; TODO
-    // }
-    e.preventDefault();
+    } else alert("Form valido")
+
+    //e.preventDefault();
+    setIsCreatingOrModifying(true);
 
     const type = formData.isTask ? "attività" : "evento"
     const types = formData.isTask ? "attività" : "eventi"
@@ -539,228 +540,227 @@ export default function EventModal() {
   //}, [formData])
 
   return (
-    <div className="h-full max-w-auto flex justify-right items-right">
+    <div className={`h-full max-w-auto ${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
       {/*<div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">*/}
-      <form onSubmit={handleSubmit} className={`${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
-        <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-3 flex rounded-t-lg justify-between items-start`}>
-          <div className="px-3"></div>
-          <div className="flex flex-col justify-center items-center">
-            <div className="flex space-x-2 my-2 justify-center">
-              <button type="submit" className={`text-xl px-2 py-1 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded ${isCreatingOrModifying ? "animate-bounce" : ""}`}>{selectedEvent ? "Modifica "+(modifyRepeated ? "ripetuti" : "") : "Crea"}</button>
-              <select className={`appearance-none text-center px-2 py-1 text-xl ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded px-2 max-w-30`}
-                      onChange={handleChangeCalendarType} defaultValue={formData.isTask ? "attività" : "evento"}>
-                <option value="evento">evento</option>
-                <option value="attività">attività</option>
-              </select>
-            </div>
-            <div className="flex space-x-2">
-              { selectingBeginDate ? <div className="flex flex-col items-center mt-2">
-                  <div className="border-b pb-2 mb-1 flex items-center space-x-2">
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                            name="day" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).date()}>
-                      {daysInMonthArray(dayjs(formData.begin)).map(day => <option key={day} value={day}>{day}</option>)}
-                    </select>
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="month" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).month()}>
-                      { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
-                    </select>
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="year" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).year()}>
-                      { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
-                    </select>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <button type="button" className="material-symbols-outlined" onClick={() => handleConfirmBeginDate("date")}>check</button>
-                    <div className="p-1 px-4"><Button click={setTodayBeginDate} label="Oggi"/></div>
-                    <button type="button" className="material-symbols-outlined" onClick={() => cancelBeginDate("date")}>close</button>
-                  </div>
-                </div>
-                :
-                <Button click={() => setSelectingBeginDate(true)} label={dayjs(formData.begin).format("dddd D MMMM YYYY")} otherCss={"text-xl"}/>
-              }
-            </div>
+      <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-3 flex rounded-t-lg justify-between items-start`}>
+        <div className="px-3"></div>
+        <div className="flex flex-col justify-center items-center">
+          <div className="flex space-x-2 my-2 justify-center">
+            <button type="button" onClick={handleSubmit}
+                    className={`text-xl px-2 py-1 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded ${isCreatingOrModifying ? "animate-bounce" : ""}`}>{selectedEvent ? "Modifica "+(modifyRepeated ? "ripetuti" : "") : "Crea"}</button>
+            <select className={`appearance-none text-center px-2 py-1 text-xl ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} rounded px-2 max-w-30`}
+                    onChange={handleChangeCalendarType} defaultValue={formData.isTask ? "attività" : "evento"}>
+              <option value="evento">evento</option>
+              <option value="attività">attività</option>
+            </select>
           </div>
-
-          <button type="button" onClick={closeModal}>
-            <span className="material-symbols-outlined text-white rounded w-4 mt-2" tabIndex="0">
-              close
-            </span>
-          </button>
-        </header>
-        <div style={{scrollbarWidth: "thin"}} className="flex flex-col items-center max-w-full min-w-[450px] p-3 max-h-[500px] overflow-auto">
-          <input className={`rounded my-3 text-xl font-semibold p-3 text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_FOCUS_BG}`} type="textarea" name="title" placeholder="Titolo" value={formData.title} onChange={handleChange} maxLength="50" required />
-          <div className="mb-4 mt-2 text-white flex items-center justify-center">
-            <span onClick={handleChangeAllDay} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeAllDay() }}
-                  className={`border rounded  cursor-pointer px-2 py-1 ${colors.BUTTON_HOVER_BG} ${allDay ? "border-transparent "+colors.BUTTON_BG  : "hover:border-transparent"}`}
-            >
-              Tutto il giorno
-            </span>
-          </div>
-          { !allDay && <div className="flex flex-col items-center">
-            <span className="mb-1">{formData.isTask ? "Alle" : "Inizia alle"}</span>
-            { selectingBeginHour ? <div className="flex flex-col items-center mb-4">
-                <div className="flex items-center space-x-2">
+          <div className="flex space-x-2">
+            { selectingBeginDate ? <div className="flex flex-col items-center mt-2">
+                <div className="border-b pb-2 mb-1 flex items-center space-x-2">
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                          name="hour" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
-                    { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                          name="day" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).date()}>
+                    {daysInMonthArray(dayjs(formData.begin)).map(day => <option key={day} value={day}>{day}</option>)}
                   </select>
-                  <p>:</p>
                   <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                          name="minute" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
-                    { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
+                          name="month" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).month()}>
+                    { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                  </select>
+                  <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                          name="year" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).year()}>
+                    { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                   </select>
                 </div>
-                <div className="mt-2 pt-1 border-t flex items-center justify-center">
-                  <button type="button" className="material-symbols-outlined" onClick={handleConfirmBeginDate}>check</button>
-                  <div className="p-1 px-4"><Button click={resetBeginHour} label="Reset"/></div>
-                  <button type="button" className="material-symbols-outlined" onClick={cancelBeginDate}>close</button>
+                <div className="flex items-center justify-center">
+                  <button type="button" className="material-symbols-outlined" onClick={() => handleConfirmBeginDate("date")}>check</button>
+                  <div className="p-1 px-4"><Button click={setTodayBeginDate} label="Oggi"/></div>
+                  <button type="button" className="material-symbols-outlined" onClick={() => cancelBeginDate("date")}>close</button>
                 </div>
               </div>
               :
-              <Button click={() => setSelectingBeginHour(true)} label={dayjs(formData.begin).format("HH:mm")} otherCss="mb-4"/>
+              <Button click={() => setSelectingBeginDate(true)} label={dayjs(formData.begin).format("dddd D MMMM YYYY")} otherCss={"text-xl"}/>
             }
-            { !formData.isTask && <>
-              <span className="mb-2">Finisce</span>
-              { selectingEndDate ? <div className="flex flex-col mb-4">
-                  <div className="border-b mb-1 pb-2 flex flex-col items-center justify-center space-x-2">
-                    <div className="flex items-center mb-2 space-x-2">
-                      <span>il </span>
-                      <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                              name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
-                        { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
-                      </select>
-                      <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
-                        { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
-                      </select>
-                      <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
-                        { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
-                      </select>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <p> alle </p>
-                      <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="hour" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).hour()}>
-                        { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
-                      </select>
-                      <p>:</p>
-                      <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                              name="minute" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).minute()}>
-                        { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-center">
-                    <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndDate}>check</button>
-                    <div className="p-1 px-4"><Button click={resetEndDate} label="Reset"/></div>
-                    <button type="button" className="material-symbols-outlined" onClick={cancelEndDate}>close</button>
-                  </div>
-                </div>
-                :
-                <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
-              }
-            </>}
-          </div>}
-          { selectedEvent ? 
-            <>
-            <div className="my-4 p-2 flex flex-col max-w-[300px] border border-red-500 text-center">
-              <p className="text-sm">Non puoi modificare le opzioni di ripetizione.</p>
-              <div className="flex items-center justify-center space-x-4 mt-3">
-                <div className="flex flex-col">
-                  <span className="text-sm">Crea un nuovo evento</span>
-                  <span className="text-sm">con lo stesso contenuto</span>
-                </div>
-                <button className="material-icons-outlined" type="button" onClick={duplicateEventContent}>content_copy</button>
-              </div>
-            </div>
-            </>
-            :
-            <>
-            <div className="mb-4 mt-2 text-white flex items-center justify-center">
-              <span onClick={handleChangeRepeated} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeRepeated() }}
-                    className={`border rounded  cursor-pointer p-1 ${colors.BUTTON_HOVER_BG} ${repeated ? "border-transparent "+colors.BUTTON_BG : "hover:border-transparent"}`}
-              >
-                Si ripete
-              </span>
-            </div>
-            { repeated && <div className="flex-col flex items-center justify-center justify-content-center">
-              <div className="flex flex-col space-x-4 items-center">
-                <span className="">Ogni</span>
-                <select className={`p-1 mt-2 rounded mb-4 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
-                        defaultValue={formData.repeatedData.every} onChange={handleChangeRepeatedEvery} required>
-                  <option value="">-----</option>
-                  <option value="day">giorno</option>
-                  <option value="week">settimana, di {dayjs(formData.begin).format("dddd")}</option>
-                  <option value="month">mese, il giorno {dayjs(formData.begin).format("D")}</option>
-                  <option value="year">anno</option>
-                </select>
-              </div>
-              <div className="mb-8 flex items-center">
-                <fieldset className="flex flex-col items-center">
-                  <div className="flex space-x-4 items-center">
-                    <legend className="mb-2">Termina</legend>
-                  </div>
-                  <div className="flex flex-col">
-                    <div className="flex ml-4 mb-2">
-                      <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsOn"} required/>
-                      { selectingEndsOn ? <div className="ml-2 flex flex-col">
-                          <div className="border-b mb-1 py-2 flex items-center justify-center space-x-2">
-                            { showIfNotRepeatsEvery(["month", "year"]) && 
-                              <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                                      name="day" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.day}>
-                                { endsOnDaysChoiceArray.map(day => <option key={day} value={day}>{day}</option>) }
-                              </select>
-                            }
-                            { showIfNotRepeatsEvery(["year"]) &&
-                              <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                                      name="month" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.month}>
-                                { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
-                              </select>
-                            }
-                            <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                                    name="year" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.year}>
-                              { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
-                            </select>
-                          </div>
-                          <div className="flex items-center justify-center">
-                            <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndsOn}>check</button>
-                            <div className="p-1 px-4"><Button click={resetEndsOn} label="Reset"/></div>
-                            <button type="button" className="material-symbols-outlined" onClick={() => setSelectingEndsOn(false)}>close</button>
-                          </div>
-                        </div>
-                        :
-                        <Button click={() => setSelectingEndsOn(true)} label={formatEndsOnDate()} otherCss={"ml-2"}/>
-                      }
-                    </div>
-                    <div className="ml-4">
-                      <input type="radio" value="endsAfter" name="repeated_type"
-                             onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsAfter"} required/>
-                      <label className="ml-2">dopo</label>
-                      <input type="number" className={`max-w-[50px] ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} pl-1 mt-2 rounded mx-3`} value={formData.repeatedData.endsAfter || 2} onChange={handleChangeRepetitionEndsAfter} min="2" max="365"/>
-                      <span>occorrenze</span>
-                    </div>
-                  </div>
-                </fieldset>
-              </div>
-            </div>}
-          </>}
-          <textarea style={{scrollbarWidth: "thin"}}
-            className={`rounded p-2 my-3 mb-4 min-w-[400px] min-h-[90px] text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
-            name="description" placeholder="Descrizione" value={formData.description} onChange={handleChange} />
-          <div className="flex items-center justify-center gap-x-2">
-            {colors.labelsNames.map((label, i) => (
-              <span key={i}
-                onClick={() => handleChangeLabel(label)}
-                tabIndex="0"
-                onKeyPress={(e) => { if (e.key === ' ') handleChangeLabel(label) }}
-                className={`${colors.labelsBackground[label]} w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}>
-                { formData.label === label && <span className={`material-icons-outlined text-black text-base`}>check</span> }
-              </span>
-            ))}
           </div>
         </div>
-      </form>
+
+        <button type="button" onClick={closeModal}>
+          <span className="material-symbols-outlined text-white rounded w-4 mt-2" tabIndex="0">
+            close
+          </span>
+        </button>
+      </header>
+      <div style={{scrollbarWidth: "thin"}} className="flex flex-col items-center max-w-full min-w-[450px] p-3 max-h-[500px] overflow-auto">
+        <input className={`placeholder-shown:border-green-500 invalid:border-red-500 rounded my-3 text-xl font-semibold p-3 text-center ${error_titleLength_prova ? "placeholder:text-red-500" : "placeholder:text-white"} ${colors.BUTTON_BG} ${colors.BUTTON_FOCUS_BG}`} type="textarea" name="title" placeholder={error_titleLength_prova || "Titolo"} value={formData.title} onChange={handleChange} maxLength="50" required />
+        <div className="mb-4 mt-2 text-white flex items-center justify-center">
+          <span onClick={handleChangeAllDay} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeAllDay() }}
+                className={`border rounded  cursor-pointer px-2 py-1 ${colors.BUTTON_HOVER_BG} ${allDay ? "border-transparent "+colors.BUTTON_BG  : "hover:border-transparent"}`}
+          >
+            Tutto il giorno
+          </span>
+        </div>
+        { !allDay && <div className="flex flex-col items-center">
+          <span className="mb-1">{formData.isTask ? "Alle" : "Inizia alle"}</span>
+          { selectingBeginHour ? <div className="flex flex-col items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                        name="hour" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
+                  { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                </select>
+                <p>:</p>
+                <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                        name="minute" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
+                  { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
+                </select>
+              </div>
+              <div className="mt-2 pt-1 border-t flex items-center justify-center">
+                <button type="button" className="material-symbols-outlined" onClick={handleConfirmBeginDate}>check</button>
+                <div className="p-1 px-4"><Button click={resetBeginHour} label="Reset"/></div>
+                <button type="button" className="material-symbols-outlined" onClick={cancelBeginDate}>close</button>
+              </div>
+            </div>
+            :
+            <Button click={() => setSelectingBeginHour(true)} label={dayjs(formData.begin).format("HH:mm")} otherCss="mb-4"/>
+          }
+          { !formData.isTask && <>
+            <span className="mb-2">Finisce</span>
+            { selectingEndDate ? <div className="flex flex-col mb-4">
+                <div className="border-b mb-1 pb-2 flex flex-col items-center justify-center space-x-2">
+                  <div className="flex items-center mb-2 space-x-2">
+                    <span>il </span>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                            name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
+                      { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
+                    </select>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
+                      { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                    </select>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
+                      { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <p> alle </p>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="hour" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).hour()}>
+                      { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                    </select>
+                    <p>:</p>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="minute" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).minute()}>
+                      { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center">
+                  <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndDate}>check</button>
+                  <div className="p-1 px-4"><Button click={resetEndDate} label="Reset"/></div>
+                  <button type="button" className="material-symbols-outlined" onClick={cancelEndDate}>close</button>
+                </div>
+              </div>
+              :
+              <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
+            }
+          </>}
+        </div>}
+        { selectedEvent ? 
+          <>
+          <div className="my-4 p-2 flex flex-col max-w-[300px] border border-red-500 text-center">
+            <p className="text-sm">Non puoi modificare le opzioni di ripetizione.</p>
+            <div className="flex items-center justify-center space-x-4 mt-3">
+              <div className="flex flex-col">
+                <span className="text-sm">Crea un nuovo evento</span>
+                <span className="text-sm">con lo stesso contenuto</span>
+              </div>
+              <button className="material-icons-outlined" type="button" onClick={duplicateEventContent}>content_copy</button>
+            </div>
+          </div>
+          </>
+          :
+          <>
+          <div className="mb-4 mt-2 text-white flex items-center justify-center">
+            <span onClick={handleChangeRepeated} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeRepeated() }}
+                  className={`border rounded  cursor-pointer p-1 ${colors.BUTTON_HOVER_BG} ${repeated ? "border-transparent "+colors.BUTTON_BG : "hover:border-transparent"}`}
+            >
+              Si ripete
+            </span>
+          </div>
+          { repeated && <div className="flex-col flex items-center justify-center justify-content-center">
+            <div className="flex flex-col space-x-4 items-center">
+              <span className="">Ogni</span>
+              <select className={`p-1 mt-2 rounded mb-4 ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
+                      defaultValue={formData.repeatedData.every} onChange={handleChangeRepeatedEvery} required>
+                <option value="">-----</option>
+                <option value="day">giorno</option>
+                <option value="week">settimana, di {dayjs(formData.begin).format("dddd")}</option>
+                <option value="month">mese, il giorno {dayjs(formData.begin).format("D")}</option>
+                <option value="year">anno</option>
+              </select>
+            </div>
+            <div className="mb-8 flex items-center">
+              <fieldset className="flex flex-col items-center">
+                <div className="flex space-x-4 items-center">
+                  <legend className="mb-2">Termina</legend>
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex ml-4 mb-2">
+                    <input type="radio" value="endsOn" name="repeated_type" onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsOn"} required/>
+                    { selectingEndsOn ? <div className="ml-2 flex flex-col">
+                        <div className="border-b mb-1 py-2 flex items-center justify-center space-x-2">
+                          { showIfNotRepeatsEvery(["month", "year"]) && 
+                            <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                                    name="day" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.day}>
+                              { endsOnDaysChoiceArray.map(day => <option key={day} value={day}>{day}</option>) }
+                            </select>
+                          }
+                          { showIfNotRepeatsEvery(["year"]) &&
+                            <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                                    name="month" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.month}>
+                              { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                            </select>
+                          }
+                          <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                                  name="year" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.year}>
+                            { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
+                          </select>
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndsOn}>check</button>
+                          <div className="p-1 px-4"><Button click={resetEndsOn} label="Reset"/></div>
+                          <button type="button" className="material-symbols-outlined" onClick={() => setSelectingEndsOn(false)}>close</button>
+                        </div>
+                      </div>
+                      :
+                      <Button click={() => setSelectingEndsOn(true)} label={formatEndsOnDate()} otherCss={"ml-2"}/>
+                    }
+                  </div>
+                  <div className="ml-4">
+                    <input type="radio" value="endsAfter" name="repeated_type"
+                           onChange={handleChangeRepetitionOption} checked={formData.repeatedData.type === "endsAfter"} required/>
+                    <label className="ml-2">dopo</label>
+                    <input type="number" className={`max-w-[50px] ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG} pl-1 mt-2 rounded mx-3`} value={formData.repeatedData.endsAfter || 2} onChange={handleChangeRepetitionEndsAfter} min="2" max="365"/>
+                    <span>occorrenze</span>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>}
+        </>}
+        <textarea style={{scrollbarWidth: "thin"}}
+          className={`rounded p-2 my-3 mb-4 min-w-[400px] min-h-[90px] text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
+          name="description" placeholder="Descrizione" value={formData.description} onChange={handleChange} />
+        <div className="flex items-center justify-center gap-x-2">
+          {colors.labelsNames.map((label, i) => (
+            <span key={i}
+              onClick={() => handleChangeLabel(label)}
+              tabIndex="0"
+              onKeyPress={(e) => { if (e.key === ' ') handleChangeLabel(label) }}
+              className={`${colors.labelsBackground[label]} w-6 h-6 rounded-full flex items-center justify-center cursor-pointer`}>
+              { formData.label === label && <span className={`material-icons-outlined text-black text-base`}>check</span> }
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
 )
 }

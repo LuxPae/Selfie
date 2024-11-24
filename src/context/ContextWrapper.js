@@ -145,18 +145,18 @@ export default function ContextWrapper({ children })
   const [ newPicture, setNewPicture ] = useState("");
   const [ newBio, setNewBio ] = useState("");
 
+  //TODO https://stackoverflow.com/questions/63143315/how-to-call-a-function-every-x-seconds-with-updated-state-react
   const [ currentNotification, setCurrentNotification ] = useState(null)
   const [ showNotification, setShowNotification ] = useState(false);
   const [ pendingNotifications, setPendingNotifications ] = useState([])
-
   const notify = (type, message) => {
-    const notification = { type, message };
-    const new_arr = pendingNotifications.splice(0, 0, notification);
-    //console.log("pendingNotifications:", pendingNotifications)
-    setPendingNotifications(new_arr)
+    const notification = { type, message }
+    const new_pending_notifications = [...pendingNotifications, notification]
+    console.log("Added notification", notification)
+    console.log("New array", new_pending_notifications)
+    setPendingNotifications(new_pending_notifications)
   }
 
-  //https://stackoverflow.com/questions/63143315/how-to-call-a-function-every-x-seconds-with-updated-state-react
 
   const [ modifyRepeated, setModifyRepeated] = useState(false);
 

@@ -1,15 +1,11 @@
 import GlobalContext from "../context/GlobalContext.js"
-import { useContext, useEffect } from "react"
+import { useContext } from "react"
 import DayTileEvent from "../components/DayTileEvent.js"
-import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
 
 export default function DayTile({ day_date, index, height, last_day_of_month, events })
 {
-  var { calendarDate, selectedDay, setSelectedDay, setSelectedEvent, setShowEventsList, setShowEventModal} = useContext(GlobalContext);
-
-  const year = selectedDay.year();
-  const month = selectedDay.month();
+  var { calendarDate, selectedDay, setSelectedDay, setShowEventsList } = useContext(GlobalContext);
 
   const isInCalendarMonth = () => calendarDate.month() === day_date.month();
   const isDaySelected = (w) => day_date.startOf("day").isSame(selectedDay.startOf("day"))

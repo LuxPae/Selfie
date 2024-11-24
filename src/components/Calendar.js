@@ -2,14 +2,13 @@
 // - import / export as ICS ?
 
 import GlobalContext from "../context/GlobalContext.js"
-import { useEffect, useState, useContext, useMemo } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"
 import EventModal from "../components/EventModal.js"
 import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
 import DayTile from "../components/DayTile.js"
 import Button from "../components/Button.js"
-import { getAllEvents } from "../API/events.js"
 import useCheckForUser from "../hooks/useCheckForUser.js"
 import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
@@ -19,7 +18,7 @@ const Calendar = () => {
 
   useCheckForUser();
 
-  var { user, currentDate, setCurrentDate, calendarDate, setCalendarDate, selectedDay, setSelectedDay, selectedEvent, setSelectedEvent, showEventModal, showEventsList, setShowEventsList, allEvents, setAllEvents, allEvents_initialize, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
+  var { user, currentDate, calendarDate, setCalendarDate, selectedDay, setSelectedDay, showEventModal, showEventsList, setShowEventsList, allEvents, allEvents_initialize, filters, shownCalendarType, showCompletedTasks } = useContext(GlobalContext);
   const navigate = useNavigate();
 
   const [selectingNewDate, setSelectingNewDate] = useState(false)
@@ -62,7 +61,8 @@ const Calendar = () => {
   const sortEvents = (events) => events.sort((a,b) => dayjs(a.begin).valueOf()-dayjs(b.begin).valueOf())
   const filterEventsByType = (events) => shownCalendarType === "tutti" ? events : events.filter((event) => {
     if (shownCalendarType === "eventi") return !event.isTask
-    if (shownCalendarType === "attività") return event.isTask
+    else if (shownCalendarType === "attività") return event.isTask
+    else return event
   })
   const filterCompletedTasks = (events) => showCompletedTasks ? events : events.filter((event) => !event.isTask || !event?.isTask.completed)
 
@@ -87,7 +87,6 @@ const Calendar = () => {
     prevMonthDates.push(day)
   }
   prevMonthDates.reverse();
-  const onti = Array.from({ length: firstDayOfCalendarMonth }, (_, i) => calendarDate.subtract(firstDayOfCalendarMonth, "day").add(i, "day"));
 
   const total_tiles_number = () => {
     let sum = prevMonthDates.length + daysInCalendarMonth
