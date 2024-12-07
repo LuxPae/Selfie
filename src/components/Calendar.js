@@ -1,6 +1,3 @@
-// [TODO]
-// - import / export as ICS ?
-
 import GlobalContext from "../context/GlobalContext.js"
 import { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"
@@ -9,6 +6,8 @@ import EventsList from "../components/EventsList.js"
 import Header from "../components/Header.js"
 import DayTile from "../components/DayTile.js"
 import Button from "../components/Button.js"
+import Filters from "../components/Filters.js"
+import ShowCalendarTypeComponent from "../components/ShowCalendarTypeComponent.js"
 import useCheckForUser from "../hooks/useCheckForUser.js"
 import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
@@ -45,8 +44,6 @@ const Calendar = () => {
 
     allEvents_initialize()
 
-    if (selectedDay) setShowEventsList(true);
-
     const ls_event = JSON.parse(localStorage.getItem("event_from_home"))
     if (ls_event) {
       const event_day = dayjs(ls_event.begin).startOf("day")
@@ -54,7 +51,7 @@ const Calendar = () => {
       setCalendarDate(event_day.startOf("month"))
       localStorage.removeItem("event_from_home")
     }
-  }, [user/*, currentDate*/])
+  }, [user, currentDate, selectedDay])
 
   const filterEventsByDate = (events, date) => events.filter(e => dayjs(date.startOf("day")).isSame(dayjs(e.begin).startOf("day")))
   const filterEventsByLabel = (events) => events.filter((event, i) => filters[event.label]);
@@ -128,86 +125,96 @@ const Calendar = () => {
     else return "96px"
   }
 
+  // TODO
+  const eventsListCss = () => {
+    if (!showEventsList) return "w-0 h-0 hidden"
+    else if (showEventModal) return "hidden md:block"
+    else return "block"
+  }
+
   const EventModalCSS = () => {
-    let css = "m-1"
-    if (showEventModal) {
-      css = "mx-2 rounded-lg"
-    } else css = "hidden"
-    return css
+    if (!showEventModal) return "w-0 h-0 hidden"
+    else return "block"
   }
 
   const CalendarCSS = () => {
     let css = `border ${colors.MAIN_BORDER_DARK} max-h-auto sm:max-w-full lg:max-w-5xl p-4 ${colors.CALENDAR_BG_DARK} rounded-lg `
 
+    if (showEventsList || showEventModal) css += " hidden md:block"
     if (!showEventsList) {
-      css += " basis-full "
+      css += " md:basis-full "
     }
     else if (showEventsList && !showEventModal) {
-      css += " basis-1/2 "
+      css += " md:basis-1/2 "
     }
     else if (showEventsList && showEventModal) {
-      css += " basis-1/3 "
+      css += " md:basis-1/3 "
     }
 
     if (!showEventModal && !showEventsList) {
-      css += " basis-full "
+      css += " md:basis-full "
     }
 
     return css;
   }
 
   return (
-    <>
-    <div className="flex flex-col">
-    <Header/>
+  <>
+  <div className="flex flex-col">
+  <Header/>
 
-    <div className="flex justify-around">
-
-      <div className="">
+    <div className="md:flex md:justify-around">
+      <div className={`${eventsListCss()} z-10`}>
         { showEventsList && <EventsList events={selectedDayEventsToDisplay}/> }
       </div>
-
-      <div className={EventModalCSS()}>
+      <div className={`${EventModalCSS()} z-20`}>
         {showEventModal && <EventModal/>}
       </div>
-
-    <div className={CalendarCSS()}>
-      <div className="flex justify-between items-center">
-        <button onClick={goPrevMonth} className="w-10 text-5xl font-bold">‹</button>
-        <div>
-          { selectingNewDate ? <div className="flex">
-              <button className="mr-3 material-symbols-outlined" onClick={handleConfirmNewDate}>check</button>
-              <div className="border-l p-1 pl-4 flex space-x-2 mr-4">
-                <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="day" onChange={handleChangeNewDate} defaultValue={selectedDay.date()}>
-                  { Array.from({ length: dayjs({...newDate}).daysInMonth() }, (_, i) => i+1).map(day => <option className="" key={day} value={day}>{day}</option>) }
-                </select>
-                <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="month" onChange={handleChangeNewDate} defaultValue={selectedDay.month()}>
-                  { monthsNames.map((month, i) => <option key={i} value={i}>{month}</option>) }
-                </select>
-                <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="year" onChange={handleChangeNewDate} defaultValue={selectedDay.year()}>
-                  { Array.from({ length: 50 }, (_, i) => 2000 + i).map(year => <option key={year} value={year}>{year}</option>) }
-                </select>
+      <div className={`${CalendarCSS()} z-0`}>
+        <div className="flex flex-col md:flex-none md:mx-3">
+          <div>
+            <div className="flex justify-between items-center justify-between">
+              <button onClick={goPrevMonth} className="text-5xl -translate-y-1 font-bold">‹</button>
+              <div>
+                { selectingNewDate ?
+                  <div className="flex justify-center">
+                    <div className="p-1 flex space-x-2 mr-4">
+                      <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="day" onChange={handleChangeNewDate} defaultValue={selectedDay.date()}>
+                        { Array.from({ length: dayjs({...newDate}).daysInMonth() }, (_, i) => i+1).map(day => <option className="" key={day} value={day}>{day}</option>) }
+                      </select>
+                      <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="month" onChange={handleChangeNewDate} defaultValue={selectedDay.month()}>
+                        { monthsNames.map((month, i) => <option key={i} value={i}>{month}</option>) }
+                      </select>
+                      <select className={`appearance-none text-center px-2 rounded ${colors.BUTTON_BG}`} name="year" onChange={handleChangeNewDate} defaultValue={selectedDay.year()}>
+                        { Array.from({ length: 50 }, (_, i) => 2000 + i).map(year => <option key={year} value={year}>{year}</option>) }
+                      </select>
+                    </div>
+                    <div className="p-1 md:border-x md:px-8"><Button click={goToToday} label="Oggi"/></div>
+                    <button className="ml-3 material-symbols-outlined" onClick={() => setSelectingNewDate(false)}>close</button>
+                  </div>
+                  :
+                  <h2 className="text-4xl text-center font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingNewDate(true)}>
+                    {MonthFormattedStringMMMM(calendarDate)} {calendarYear}
+                  </h2>
+                }
               </div>
-              <div className="p-1 px-4 border-x"><Button click={goToToday} label="Oggi"/></div>
-              <button className="ml-3 material-symbols-outlined" onClick={() => setSelectingNewDate(false)}>close</button>
+              <button onClick={goNextMonth} className="-translate-y-1 text-5xl font-bold">›</button>
             </div>
-            :
-            <h2 className="text-4xl text-center font-bold cursor-pointer" title="Vai a oggi" onClick={() => setSelectingNewDate(true)}>
-                {MonthFormattedStringMMMM(calendarDate)} {calendarYear}
-            </h2>
-          }
+            <div className="grid grid-cols-7 gap-1 text-lg text-center">
+              {daysOfWeek.map((day, index) => <div key={index} className="font-semibold">{day}</div> )}
+              {calendarMonthDates.map((date, index) => <DayTile key={index} day_date={date} events={allEventsToDisplay.filter(e => dayjs(e.begin).startOf("day").isSame(date.startOf("day")))} index={index} last_day_of_month={calendarMonthDates.length-trailingDays} height={day_tile_height()}/>)}
+            </div>
+          </div>
+          <div className="flex mt-3 flex-col md:flex-row justify-between">
+            <div><ShowCalendarTypeComponent/></div>
+            <div><Filters/></div>
+          </div>
         </div>
-        <button onClick={goNextMonth} className="w-10 text-5xl font-bold">›</button>
-      </div>
-      <div className="grid grid-cols-7 gap-1 text-lg text-center">
-        {daysOfWeek.map((day, index) => <div key={index} className="font-semibold">{day}</div> )}
-        {calendarMonthDates.map((date, index) => <DayTile key={index} day_date={date} events={allEventsToDisplay.filter(e => dayjs(e.begin).startOf("day").isSame(date.startOf("day")))} index={index} last_day_of_month={calendarMonthDates.length-trailingDays} height={day_tile_height()}/>)}
       </div>
     </div>
   </div>
-  </div>
   </>
-  );
-};
+  )
+}
 
 export default Calendar;

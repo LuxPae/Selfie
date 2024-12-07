@@ -1,31 +1,24 @@
-//[TODO] DAI CI SONO QUASIIIII
-// - newEndsOn come gli altri
-// - devo fare le notifiche?
-import { useContext, useEffect, useState, useMemo } from "react";
-import GlobalContext from "../context/GlobalContext";
+import { useContext, useEffect, useState, useMemo } from "react"
+import GlobalContext from "../context/GlobalContext"
 import Button from "../components/Button.js"
-import { getEventsByRepId, createSingleEvent, createRepeatedEvent, modifyEvent } from "../API/events.js";
+import { createSingleEvent, createRepeatedEvent, modifyEvent } from "../API/events.js"
 import dayjs from "dayjs"
 import * as colors from "../scripts/COLORS.js"
 import { monthsNames } from "../scripts/CONSTANTS.js"
 
 export default function EventModal() {
-  var { user, showEventModal, setShowEventModal, selectedDay, setSelectedDay, currentDate, allEvents_createEvents, allEvents_modifyEvents, selectedEvent, setSelectedEvent, notify, modifyRepeated, multipleDaysEvents } = useContext(GlobalContext)
+  var { user, showEventModal, setShowEventModal, selectedDay, currentDate, allEvents_createEvents, allEvents_modifyEvents, selectedEvent, isCreatingNewEvent, setIsCreatingNewEvent, setSelectedEvent, notify, modifyRepeated, multipleDaysEvents, duplicatedEvent, setDuplicatedEvent } = useContext(GlobalContext)
 
   const roundMinutes = (minutes) => (Math.ceil(minutes/15)*15)%60
 
-  //TODO il nome non mi piace
   const current_hour_date = (date, begin) => {
     const relativeBeginDate = begin ? dayjs(begin) : currentDate
     date = dayjs(date)
-    var d;
-    if (date.startOf("day").isSame(relativeBeginDate.startOf("day"))) {
-      d = dayjs(date).startOf("minute");
-    } else {
-      d = date.startOf("day").add(relativeBeginDate.hour(), "hour").add(relativeBeginDate.minute(), "minute");
-    }
+    var d
+    d = date.startOf("day").add(relativeBeginDate.hour(), "hour").add(relativeBeginDate.minute(), "minute")
+    const hour = d.minute() <= 45 ? d.hour() : d.hour()+1
     const minute = roundMinutes(d.minute())
-    const final_date = dayjs({day: d.date(), month: d.month(), year: d.year(), hour: d.hour(), minute })
+    const final_date = dayjs({day: d.date(), month: d.month(), year: d.year(), hour, minute })
     return final_date
   }
 
@@ -42,7 +35,7 @@ export default function EventModal() {
       rep_id: "",
       every: "",
       type: "",
-      endsOn: selectedDay.valueOf(),
+      endsOn: selectedDay.add(1, "day").valueOf(),
       endsAfter: 2,
     },
   })
@@ -57,21 +50,16 @@ export default function EventModal() {
   const [selectingEndDate, setSelectingEndDate] = useState(false)
 
   const [isCreatingOrModifying, setIsCreatingOrModifying] = useState(false)
-  const [duping, setDuping] = useState(false)
-  const [allDay, setAllDay] = useState(false);
-  const [repeated, setRepeated] = useState(false);
+  const [allDay, setAllDay] = useState(false)
+  const [repeated, setRepeated] = useState(false)
 
   const [oldEndsOnDate, setOldEndsOnDate] = useState(dayjs(formData.repeatedData.endsOn))
   const [selectingEndsOn, setSelectingEndsOn] = useState(false)
-  const [newEndsOn, setNewEndsOn ] = useState((() => {
-    const endsOnDate = selectedEvent ? dayjs(selectedEvent) : dayjs(selectedDay)
-    return ({ day: endsOnDate.date(), month: endsOnDate.month(), year: endsOnDate.year() })
-  })())
 
   const daysInMonthArray = (date) => Array.from({length: dayjs(date).daysInMonth()}, (_, i) => i+1)
   const endsOnDaysChoice = () => {
     const begin = dayjs(formData.begin)
-    const endsOnDate = dayjs({...newEndsOn})
+    const endsOnDate = dayjs(formData.repeatedData.endsOn)
     if (formData.repeated && formData.repeatedData.every === "week") {
       var dates = []
       let i = 1
@@ -86,7 +74,7 @@ export default function EventModal() {
       return daysChoice
     } else return daysInMonthArray(endsOnDate)
   }
-  const endsOnDaysChoiceArray = useMemo(() => endsOnDaysChoice(), [formData.repeatedData.every, newEndsOn.month])
+  const endsOnDaysChoiceArray = endsOnDaysChoice()
   const monthsArray = Array.from({length:12}, (_, i) => i)
   const yearsChoiceArray = Array.from({ length: 100 }, (_, i) => 2000 + i)
   const hoursChoiceArray = Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0'))
@@ -101,7 +89,7 @@ export default function EventModal() {
   // END DATE
   const resetEndDate = (from) => {
     const resettedDate = current_hour_date(dayjs(formData.begin), dayjs(formData.begin)).add(1, "hour")
-    console.log("resetted end date:", resettedDate.format("dddd D MMMM YYYY HH:mm"))
+    //console.log("resetted end date:", resettedDate.format("dddd D MMMM YYYY HH:mm"))
     var newEndDate = { day: resettedDate.date(), month: resettedDate.month(), year: resettedDate.year(), hour: resettedDate.hour(), minute: resettedDate.minute() }
     newEndDate = dayjs({...newEndDate})
     const newFormData = {
@@ -120,8 +108,8 @@ export default function EventModal() {
 
   const handleChangeEndDate = (e) => {
     var { name, value } = e.target
-    setOldEndDate(dayjs(formData.end))
     const end = dayjs(formData.end)
+    setOldEndDate(end)
     var newEndDate = { day: end.date(), month: end.month(), year: end.year(), hour: end.hour(), minute: end.minute() }
     newEndDate[name] = parseInt(value)
     newEndDate = dayjs({...newEndDate})
@@ -134,7 +122,7 @@ export default function EventModal() {
 
   const cancelEndDate = () => {
     const oldFormDataEnd = dayjs(formData.end)
-    console.log("resetted end:", oldFormDataEnd)
+    //console.log("resetted end:", oldFormDataEnd)
     const newFormData = {
       ...formData,
       end: oldEndDate.valueOf()
@@ -146,41 +134,57 @@ export default function EventModal() {
   // ~ END DATE
   
   // ENDS ON
-  const handleChangeNewEndsOn = (e) => {
-    const { name, value } = e.target
-    console.log(name, value)
-    const new_ends_on = {
-      ...newEndsOn,
-      [name]: value
-    }
-    console.log(new_ends_on)
-    setNewEndsOn(new_ends_on)
-  }
-
-  const resetEndsOn = () => {
-    const resettedEndsOn = dayjs(formData.end).startOf("day")
+  const handleChangeEndsOn = (e) => {
+    var { name, value } = e.target
+    const endsOn = dayjs(formData.repeatedData.endsOn)
+    setOldEndsOnDate(endsOn)
+    var newEndsOn = { day: endsOn.date(), month: endsOn.month(), year: endsOn.year() }
+    newEndsOn[name] = parseInt(value)
+    newEndsOn = dayjs({...newEndsOn})
     const newFormData = {
       ...formData,
       repeatedData: {
         ...formData.repeatedData,
-        endsOn: resettedEndsOn
+        endsOn: newEndsOn.valueOf()
       }
     }
-    const new_ends_on = { day: resettedEndsOn.date(), month: resettedEndsOn.month(), year: resettedEndsOn.year() }
-    setNewEndsOn(new_ends_on)
+    setFormData(newFormData)
+  }
+
+  const cancelEndsOn = () => {
+    const oldFormDataEndsOn = dayjs(formData.repeatedData.endsOn)
+    const newFormData = {
+      ...formData,
+      repeatedData: {
+        ...formData.repeatedData,
+        endsOn: oldEndsOnDate.valueOf()
+      }
+    }
+    setOldEndsOnDate(oldFormDataEndsOn)
     setFormData(newFormData)
     setSelectingEndsOn(false)
   }
+
   const handleConfirmEndsOn = () => {
-    const endsOn = dayjs({...newEndsOn}).valueOf()
+    setOldEndsOnDate(dayjs(formData.repeatedData.endsOn))
+    setSelectingEndsOn(false)
+  }
+
+  //TODO guarda, se proprio volessi potrei fare che quando si resetta e il tipo è day sceglie il giorno successiva ecc... per gli altri tipi
+  const resetEndsOn = () => {
+    const resettedDate = current_hour_date(dayjs(formData.begin), dayjs(formData.begin))
+    console.log("resetted end date:", resettedDate.format("dddd D MMMM YYYY HH:mm"))
+    var newEndsOn = { day: resettedDate.date(), month: resettedDate.month(), year: resettedDate.year() }
+    newEndsOn = dayjs({...newEndsOn})
     const newFormData = {
       ...formData,
       repeatedData: {
         ...formData.repeatedData,
-        endsOn
+        endsOn: newEndsOn.valueOf()
       }
     }
     setFormData(newFormData)
+    setOldEndsOnDate(dayjs(newFormData.repeatedData.endsOn))
     setSelectingEndsOn(false)
   }
   // ~ ENDS ON
@@ -216,8 +220,8 @@ export default function EventModal() {
 
   const handleChangeBeginDate = (e) => {
     var { name, value } = e.target
-    setOldBeginDate(dayjs(formData.begin))
     const begin = dayjs(formData.begin)
+    setOldBeginDate(begin)
     var newBeginDate = { day: begin.date(), month: begin.month(), year: begin.year(), hour: begin.hour(), minute: begin.minute() }
     newBeginDate[name] = parseInt(value)
     newBeginDate = dayjs({...newBeginDate})
@@ -259,13 +263,13 @@ export default function EventModal() {
       begin: new_begin,
       allDay: new_value
     }
-    setAllDay(new_value);
+    setAllDay(new_value)
     setFormData(newFormData)
   }
 
   const handleChangeRepeated = () => {
     const new_value = !repeated
-    setRepeated(new_value);
+    setRepeated(new_value)
     const newFormData = {
       ...formData,
       repeated: new_value
@@ -274,9 +278,9 @@ export default function EventModal() {
   }
 
   // VALIDATORS
-    //TODO
-  const [error_titleLength_prova, setError_titleLength_prova] = useState("")
-  const validate_titleLength_prova = () => formData.title.length > 10
+  const [validationError, setValidationError] = useState("")
+
+  const validate_titleMinLength = () => formData.title.length > 0
 
   const validate_date = () => {
     const begin = dayjs(formData.begin)
@@ -285,27 +289,68 @@ export default function EventModal() {
     return diff >= 0
   }
 
+  const validate_repeatedEvery = () => formData.repeatedData.every != ""
+  const validate_repeatedEnd = () => formData.repeatedData.type != ""
+  const validate_repeatedEndsOnSameDay = () => {
+    const begin = dayjs(formData.begin)
+    const endsOn = dayjs(formData.repeatedData.endsOn)
+    return !begin.startOf("day").isSame(endsOn.startOf("day"))
+  }
+  const validate_repeatedEndsOnBefore = () => {
+    const begin = dayjs(formData.begin)
+    const endsOn = dayjs(formData.repeatedData.endsOn)
+    return begin.startOf("day").isBefore(endsOn.startOf("day"))
+  }
+
+  let tipo = (selectedEvent ? "modifica " : "creazione ")+(formData.isTask ? "attività - " : "evento - ")
   const validate_form = () => {
-    if (!validate_titleLength_prova()) {
-      let tipo = (selectedEvent ? "modifica " : "creazione ")+(formData.isTask ? "attività" : "evento");
-      notify("error", tipo+" - inserisci il titolo");
-      setError_titleLength_prova("AAAAAAAAAAA TODO")
+    if (!validate_titleMinLength()) {
+      setValidationError("Inserisci il titolo")
       return false
     }
     else if (!validate_date()) {
-      notify("error", "L'ora di fine deve essere successiva all'ora di inizio")
+      setValidationError("L'ora di fine deve essere successiva all'ora di inizio")
+      return false
+    }
+    else if (formData.repeated && !validate_repeatedEvery()) {
+      setValidationError("Scegli ogni quanto si ripete")
+      return false
+    }
+    else if (formData.repeated && !validate_repeatedEnd()) {
+      setValidationError("Scegli quando termina la ripetizione")
+      return false
+    }
+    else if (formData.repeated && formData.repeatedData.type === "endsOn" && !validate_repeatedEndsOnSameDay()) {
+      setValidationError("Non può terminare lo stesso giorno")
+      return false
+    }
+    else if (formData.repeated && formData.repeatedData.type === "endsOn" && !validate_repeatedEndsOnBefore()) {
+      setValidationError("Non può terminare prima dell'inizio")
       return false
     }
     return true
   }
   // ~ VALIDATORS
 
+  //TODO guarda, se proprio volessi potrei fare che quando si resetta e il tipo è day sceglie il giorno successiva ecc... per gli altri tipi
   const handleChangeRepeatedEvery = (e) => {
+    const value = e.target.value
+    switch (value) {
+      case "day": console.log("giorno")
+        break
+      case "week": console.log("settimana")
+        break
+      case "month": console.log("mese")
+        break
+      case "year": console.log("anno")
+        break
+      default: break
+    }
     const newFormData = {
       ...formData,
       repeatedData: {
         ...formData.repeatedData,
-        every: e.target.value
+        every: value
       }
     }
     setFormData(newFormData)
@@ -331,7 +376,7 @@ export default function EventModal() {
       }
     }
     setFormData(newFormData)
-    setSelectingEndsOn(false);
+    setSelectingEndsOn(false)
   }
 
   const handleChangeRepetitionEndsAfter = (e) => {
@@ -354,24 +399,24 @@ export default function EventModal() {
   }
 
   const handleChangeCalendarType = (e) => {
-    const isThisTask = e.target.value === "attività" ? true : false;
+    const isThisTask = e.target.value === "attività" ? true : false
     const newFormData = {
       ...formData,
       isTask: isThisTask ? { completed: false } : null
     }
-    setFormData(newFormData);
+    setFormData(newFormData)
   }
 
   const MAX_RAND_CHARS = 16
   const generate_id = (data) => {
-    const rand_chars1 = Math.random().toString(36);
-    const rand_chars2 = Math.random().toString(36);
+    const rand_chars1 = Math.random().toString(36)
+    const rand_chars2 = Math.random().toString(36)
     const id = (rand_chars1 + rand_chars2.substr(2)).substr(2, MAX_RAND_CHARS);
-    return id;
+    return id
   }
 
   function closeModal() {
-    setShowEventModal(false);
+    setShowEventModal(false)
     setSelectedEvent(null)
   }
 
@@ -388,14 +433,10 @@ export default function EventModal() {
     return info
   }
 
-  const handleSubmit = async (e) => {
-    if (!validate_form()) {
-      alert("Form non valido")
-      return;
-    } else alert("Form valido")
+  const handleSubmit = async () => {
+    if (!validate_form()) return
 
-    //e.preventDefault();
-    setIsCreatingOrModifying(true);
+    setIsCreatingOrModifying(true)
 
     const type = formData.isTask ? "attività" : "evento"
     const types = formData.isTask ? "attività" : "eventi"
@@ -411,15 +452,15 @@ export default function EventModal() {
         ...formData.repeatedData,
         rep_id: generate_id(formData.repeatedData)
       }
-    };
-    console.log(event)
+    }
+    //console.log(event)
     if (selectedEvent) {
       if (!selectedEvent.lastsMoreDays) {
         event = {
           ...event,
           _id: selectedEvent._id,
           repeatedData: selectedEvent.repeatedData
-        };
+        }
       } else {
         const md_event = multipleDaysEvents.find(e => e._id === event._id)
         event = {
@@ -439,57 +480,43 @@ export default function EventModal() {
           if (modified_events.length === 0) throw new Error(`non è stato possibile modificare ${types_art}`)
           else {
             allEvents_modifyEvents(modified_events)
-            notify("Calendario", `${modified_events.length} ${types} modificat${event.isTask ? "e" : "i"}`)
+            notify([{type:"Calendario", message:`${modified_events.length} ${types} modificat${event.isTask ? "e" : "i"}`}])
           }
         } else {
           const modified_event = await modifyEvent(event, user)
-          if (!modified_event) throw new Error(`non è stato possibile modificare ${type_art}`);
+          if (!modified_event) throw new Error(`non è stato possibile modificare ${type_art}`)
           else {
             allEvents_modifyEvents([event])
-            notify("Calendario", `${type} modificat${event.isTask ? "a" : "o"}`)
+            notify([{type:"Calendario", message:`${type} modificat${event.isTask ? "a" : "o"}`}])
           }
         }
       } catch(error) {
-        console.error("Error modifying event:", error.message);
-        notify("error", error.message);
+        console.error("Error modifying event:", error.message)
+        notify([{type:"error", message:error.message}])
       }
     } else {
       try {
-        var created_events = null;
+        var created_events = null
         if (!event.repeated) {
           let e = await createSingleEvent(event, user)
           if (e) created_events = [e]
         }
         else created_events = await createRepeatedEvent(event, user)
         if (!created_events) {
-          if (event.repeated) throw new Error(`non è stato possibile creare ${types_art}`);
-          else throw new Error(`non è stato possibile creare ${type_art}`);
+          if (event.repeated) throw new Error(`non è stato possibile creare ${types_art}`)
+          else throw new Error(`non è stato possibile creare ${type_art}`)
         } else {
           allEvents_createEvents(created_events)
-          if (created_events.length === 1) notify("Calendario", `${type} creat${event.isTask ? "a" : "o"}`)
-          else notify("Calendario", `${created_events.length} ${types} creat${event.isTask ? "e" : "i"}`)
+          if (created_events.length === 1) notify([{type:"Calendario", message:`${type} creat${event.isTask ? "a" : "o"}`}])
+          else notify([{type:"Calendario", message:`${created_events.length} ${types} creat${event.isTask ? "e" : "i"}`}])
         }
       } catch(error) {
-        console.error('Error creating event:', error.message);
-        notify("error", error.message);
+        console.error('Error creating event:', error.message)
+        notify([{type:"error", message:error.message}])
       }
     }
-    closeModal();
-    setIsCreatingOrModifying(false);
-  }
-
-  const duplicateEventContent = () => {
-    setDuping(true)
-    const duplicateEvent = {
-      ...selectedEvent,
-      repeatedData: {
-        ...selectedEvent.repeatedData,
-        rep_id: ""
-      }
-    }
-    delete duplicateEvent._id
-    setSelectedEvent(null)
-    setFormData(duplicateEvent)
+    closeModal()
+    setIsCreatingOrModifying(false)
   }
 
   const formatEndsOnDate = () => {
@@ -503,7 +530,7 @@ export default function EventModal() {
   const formattedEndDate = useMemo(() => {
     const begin = dayjs(formData.begin)
     const end = dayjs(formData.end)
-    var formattedDate = "";
+    var formattedDate = ""
     if (end.startOf("day").isSame(begin.startOf("day"))) formattedDate = "Lo stesso giorno"
     else formattedDate = end.format("dddd D MMMM YYYY")
     formattedDate += " alle "+end.format("HH:mm")
@@ -511,38 +538,43 @@ export default function EventModal() {
   }, [formData.end, formData.begin])
 
   useEffect(() => {
-    if (!duping && !formData) {
+    if (duplicatedEvent) {
+      const dup_event = {
+        ...duplicatedEvent,
+        repeatedData: {
+          ...duplicatedEvent.repeatedData,
+          rep_id: ""
+        }
+      }
+      delete dup_event._id
+      setSelectedEvent(null)
+      setDuplicatedEvent(null)
+      setFormData(dup_event)
+    }
+
+    if (isCreatingNewEvent) {
       setFormData(event_data())
       setAllDay(selectedEvent?.allDay || false)
       setRepeated(selectedEvent?.repeated || false)
+      setIsCreatingNewEvent(false)
     }
-
-    return () => {
-      setDuping(false)
-    }
-  }, [showEventModal, selectedEvent, setSelectedEvent, selectingBeginDate, selectingEndDate ])
+  }, [showEventModal, selectedEvent, duplicatedEvent, isCreatingNewEvent, selectingBeginDate, selectingEndDate ])
 
   const niceFormData = (otherFormData) => {
-      const formData = otherFormData || formData
+      const nice_form_data = otherFormData || formData
     return {
-      ...formData,
-      begin: dayjs(formData.begin).format("dddd D MMMM YYYY HH:mm"),
-      end: dayjs(formData.end).format("dddd D MMMM YYYY HH:mm")
+      ...nice_form_data,
+      begin: dayjs(nice_form_data.begin).format("dddd D MMMM YYYY HH:mm"),
+      end: dayjs(nice_form_data.end).format("dddd D MMMM YYYY HH:mm")
     }
   }
   //useEffect(() => {
-  //  const niceFormData = {
-  //    ...formData,
-  //    begin: dayjs(formData.begin).format("dddd D MMMM YYYY HH:mm"),
-  //    end: dayjs(formData.end).format("dddd D MMMM YYYY HH:mm")
-  //  }
-  //  console.log("Formdata:", niceFormData)
+  //  console.log("FormData:", niceFormData())
   //}, [formData])
 
   return (
-    <div className={`h-full max-w-auto ${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
-      {/*<div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] min-w-[500px] mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">*/}
-      <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-3 flex rounded-t-lg justify-between items-start`}>
+    <div onKeyPress={e => { if(e.key === 'Enter') handleSubmit()}} className={`h-screen max-w-auto ${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
+      <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-6 flex rounded-t-lg justify-between items-start`}>
         <div className="px-3"></div>
         <div className="flex flex-col justify-center items-center">
           <div className="flex space-x-2 my-2 justify-center">
@@ -588,8 +620,9 @@ export default function EventModal() {
           </span>
         </button>
       </header>
+      { validationError && <p className={`flex border ${colors.MAIN_BORDER_LIGHT} justify-center -translate-y-3 ${colors.MAIN_TEXT_LIGHT} ${colors.CALENDAR_BG_DARK}`}>{validationError}</p> }
       <div style={{scrollbarWidth: "thin"}} className="flex flex-col items-center max-w-full min-w-[450px] p-3 max-h-[500px] overflow-auto">
-        <input className={`placeholder-shown:border-green-500 invalid:border-red-500 rounded my-3 text-xl font-semibold p-3 text-center ${error_titleLength_prova ? "placeholder:text-red-500" : "placeholder:text-white"} ${colors.BUTTON_BG} ${colors.BUTTON_FOCUS_BG}`} type="textarea" name="title" placeholder={error_titleLength_prova || "Titolo"} value={formData.title} onChange={handleChange} maxLength="50" required />
+        <input className={`rounded my-3 text-xl font-semibold p-3 text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_FOCUS_BG}`} type="textarea" name="title" placeholder="Titolo" value={formData.title} onChange={handleChange} maxLength="50" required />
         <div className="mb-4 mt-2 text-white flex items-center justify-center">
           <span onClick={handleChangeAllDay} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeAllDay() }}
                 className={`border rounded  cursor-pointer px-2 py-1 ${colors.BUTTON_HOVER_BG} ${allDay ? "border-transparent "+colors.BUTTON_BG  : "hover:border-transparent"}`}
@@ -672,7 +705,7 @@ export default function EventModal() {
                 <span className="text-sm">Crea un nuovo evento</span>
                 <span className="text-sm">con lo stesso contenuto</span>
               </div>
-              <button className="material-icons-outlined" type="button" onClick={duplicateEventContent}>content_copy</button>
+              <button className="material-icons-outlined" type="button" onClick={() => setDuplicatedEvent(selectedEvent)}>content_copy</button>
             </div>
           </div>
           </>
@@ -709,25 +742,25 @@ export default function EventModal() {
                         <div className="border-b mb-1 py-2 flex items-center justify-center space-x-2">
                           { showIfNotRepeatsEvery(["month", "year"]) && 
                             <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                                    name="day" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.day}>
+                                    name="day" onChange={handleChangeEndsOn} defaultValue={dayjs(formData.repeatedData.endsOn).date()}>
                               { endsOnDaysChoiceArray.map(day => <option key={day} value={day}>{day}</option>) }
                             </select>
                           }
                           { showIfNotRepeatsEvery(["year"]) &&
                             <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                                    name="month" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.month}>
+                                    name="month" onChange={handleChangeEndsOn} defaultValue={dayjs(formData.repeatedData.endsOn).month()}>
                               { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
                             </select>
                           }
                           <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                                  name="year" onChange={handleChangeNewEndsOn} defaultValue={newEndsOn.year}>
+                                  name="year" onChange={handleChangeEndsOn} defaultValue={dayjs(formData.repeatedData.endsOn).year()}>
                             { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
                           </select>
                         </div>
                         <div className="flex items-center justify-center">
                           <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndsOn}>check</button>
                           <div className="p-1 px-4"><Button click={resetEndsOn} label="Reset"/></div>
-                          <button type="button" className="material-symbols-outlined" onClick={() => setSelectingEndsOn(false)}>close</button>
+                          <button type="button" className="material-symbols-outlined" onClick={cancelEndsOn}>close</button>
                         </div>
                       </div>
                       :

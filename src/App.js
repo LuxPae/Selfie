@@ -1,22 +1,10 @@
-/* [TODO]
-
-- Modelli:
-  > vorrei mostrare gli errori dei validators, ma sembra essere complicato aaaaaaa
-- themes fatti come dice Asia
-- calendario
-  > modal più piccolo
-- home 
-  > renderla carino da vedere
-- profile
-  > rifinire
-
-*/
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import InitialPage from "./components/InitialPage.js"
 import Header from "./components/Header.js"
 import Home from "./components/Home.js";
+import HomeJS from "./components/HomeJS.js";
 import Login from "./components/Login.js";
 import Register from "./components/Register.js";
 import Profile from "./components/Profile.js";
@@ -40,7 +28,8 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/" element={<><InitialPage/></>}/>
-        <Route path="/home" element={<><Header/><Home/></>}/>
+        <Route path="/home" element={<Home/>}/>
+        <Route path="/homejs" element={<><Header/><HomeJS/></>}/>
         
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register/>}/>

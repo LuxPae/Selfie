@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 html {
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  overflow: auto;
 }
 
 body {
@@ -17,7 +18,8 @@ body {
 
   //background-color: #262626;
   //background-color: #27272a;
-  background-color: #18181b;
+  //background-color: #18181b;
+  background-color: transparent;
 }
 
 code {

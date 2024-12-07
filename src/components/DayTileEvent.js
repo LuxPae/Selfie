@@ -27,10 +27,10 @@ export default function DayTileEvent({ event })
       const res = await modifyEvent(modified_task, user);
       if (!res) throw new Error("Non è stato possibile modificare l'attività")
       allEvents_modifyEvents([modified_task])
-      if (value) notify("Calendario", "Attvitià completata")
+      if (value) notify([{type:"Calendario", message:"Attvitià completata"}])
     } catch(error) {
       console.error("Non è stato possibile modificare l'attività")
-      notify("error", error.message)
+      notify([{type:"error", message:error.message}])
     }
   }
 

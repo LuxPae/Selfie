@@ -109,12 +109,12 @@ const Profile = () => {
       const response = await modifyUser(new_user);
       localStorage.setItem("user", JSON.stringify(response))
       dispatchUser({ type: "MODIFY", payload: response });
-      notify("Utente", "profilo modificato")
+      notify([{type:"Utente", message:"profilo modificato"}])
       setModifyingState(false);
     }
     catch(error) {
       //TODO qui ci vanno gli errori di validazione
-      notify("error", error.message);
+      notify([{type:"error", message:error.message}])
     }
   }
 

@@ -1,28 +1,16 @@
-//[TODO]
-// rendere globali notify, pendingNotifications e currentNotification
-
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useEffect, useContext } from "react"
 import { NOTIFICATION_EXPIRATION_TIME } from "../scripts/CONSTANTS.js"
-
-function IAddNotifications({ nome_prova })
-{
-  var { notify } = useContext(GlobalContext)
-
-  const createNotification = () => {
-    notify(nome_prova, "notifica")
-  }
-
-  return (
-    <button className="mb-4 border rounded px-1" onClick={createNotification}>notifica {nome_prova}</button>
-  )
-}
+import * as colors from "../scripts/COLORS.js"
       
 export default function NotificationsBar()
 {
-  var { currentNotification, setCurrentNotification, pendingNotifications, setPendingNotifications } = useContext(GlobalContext)
+  var { notify, currentNotification, setCurrentNotification, pendingNotifications, setPendingNotifications, showNotification, setShowNotification } = useContext(GlobalContext)
+
+  const [hideNotifications, setHideNotifications] = useState(false)
 
   const showNextNotification = () => {
+    setShowNotification(true)
     const new_pending_notifications = pendingNotifications.slice(1)
     setPendingNotifications(new_pending_notifications)
     const newNotification = new_pending_notifications[0]
@@ -30,33 +18,30 @@ export default function NotificationsBar()
   }
 
   const len = pendingNotifications.length
-  var timer
   useEffect(() => {
-    if (len === 0) setCurrentNotification(null)
-    else if (len > 1) timer = setInterval(showNextNotification, NOTIFICATION_EXPIRATION_TIME)
-    else {
+    var timer
+    if (len === 0) {
+      setCurrentNotification(null)
+      setShowNotification(false)
+    } else {
+      if (!hideNotifications) setShowNotification(true)
       const newNotification = pendingNotifications[0]
       setCurrentNotification(newNotification)
       timer = setTimeout(showNextNotification, NOTIFICATION_EXPIRATION_TIME)
     }
 
     return () => clearInterval(timer)
-  }, [pendingNotifications])
+  }, [notify])
 
-  const formatNotification = (notification) => `${notification.type} -> ${notification.message}`
-
-  return (
-    <div>
-      <IAddNotifications nome_prova="prova 1"/>
-      <IAddNotifications nome_prova="calendario "/>
-      <IAddNotifications nome_prova="errore"/>
-      <div>Notifica corrente: {currentNotification ? (currentNotification.type+" - "+currentNotification.message) : "nessuna"}</div>
-      <div>Coda di notifiche:</div>
-      { len > 0 ? <ol>{ pendingNotifications.map(n => <li>- {formatNotification(n)}</li>)}</ol> 
-        : <div>ø</div>
+  return (<>
+    <div className={`${showNotification || "hidden"} w-full flex items-center justify-center border-b-2 rounded-b-xl bg-zinc-800 z-20`} onClick={() => { setShowNotification(false); setHideNotifications(true) }}>
+      { currentNotification?.type === "error" && <span className="text-red-500">Errore: {currentNotification.message}</span>}
+      { currentNotification?.type === "warning" && <span className="text-yellow-500">Attenzione: {currentNotification.message}</span>}
+      { (currentNotification?.type !==  "error" && currentNotification?.type !== "warning") &&
+        <span className="text-gray-300">{currentNotification?.type}{currentNotification?.type && ":"} {currentNotification?.message}</span>
       }
     </div>
-  )
+  </>)
 }  
 
 

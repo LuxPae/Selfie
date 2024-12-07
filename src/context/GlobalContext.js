@@ -32,10 +32,14 @@ const GlobalContext = React.createContext({
 
   selectedEvent: null,
   setSelectedEvent: (new_event) => {}, 
+  isCreatingNewEvent: false,
+  setIsCreatingNewEvent: (new_state) => {}, 
   showEventModal: false,
   setShowEventModal: (new_state) => {},
   showEventsList: false,
   setShowEventsList: (new_state) => {},
+  duplicatedEvent: null,
+  setDuplicatedEvent: (new_dup) => {},
 
   currentNotification: null,
   setCurrentNotification: (new_notification) => {},
@@ -43,7 +47,7 @@ const GlobalContext = React.createContext({
   setShowNotification: (new_state) => {},
   pendingNotifications: [],
   setPendingNotifications: (new_arr) => {},
-  notify: (type, message) => {},
+  notify: (notifications) => {},
 
   modifyRepeated: false,
   setModifyRepeated: (new_state) => {},

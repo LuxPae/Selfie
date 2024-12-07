@@ -27,14 +27,13 @@ export default function DayTile({ day_date, index, height, last_day_of_month, ev
   }
 
   const handleClick = (clicked_event) => {
-    setShowEventsList(true);
     //setShowEventModal(true);
     //setSelectedEvent(clicked_event);
   }
 
   return (
     <>
-    <div style={{ height }} onClick={() => setSelectedDay(day_date)} tabIndex="0"
+    <div style={{ height }} onClick={() => { setSelectedDay(day_date); setShowEventsList(true) }} tabIndex="0"
         className={`border-2 border-white ${css()} h-16 flex flex-col justify-start px-1 rounded-lg focus:border-2 hover:border-2 focus:text-white hover:text-white`}
     >
       <div className="flex justify-between">

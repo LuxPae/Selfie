@@ -198,10 +198,6 @@ export const createRepeatedEvent = async (event, user) => {
   }
 }
 
-export const createMultipleDaysEvent = async (event, user) => {
-  alert("TODO")
-}
-
 export const modifyEvent = async (event_to_modify, user, modifyRepeated) => {
   try {
     if (!modifyRepeated) {

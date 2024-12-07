@@ -1,14 +1,11 @@
-// [TODO]
-// - eventsList troppo grande in larghezza
 import GlobalContext from "../context/GlobalContext.js"
 import { useState, useContext, useEffect } from "react"
 import { getEventsByRepId, deleteEvents, modifyEvent } from "../API/events.js"
-import { labelsText, labelsBorder, labelsAccent, labelsBackground, labelsTextContrast, labelsBorderContrast } from "../scripts/COLORS.js"
+import { labelsAccent, labelsBackground, labelsTextContrast, labelsBorderContrast } from "../scripts/COLORS.js"
 import dayjs from "dayjs"
 
 function EventActionButton({ icon, label, action, otherCss })
 {
-  //TODO l'animazione fa un po' di casino, ovviamente
   return (
     <div className="p-px w-fit flex flex-col items-center cursor-pointer text-center rounded-lg hover:scale-110 hover:linear duration-500" onClick={() => action()}>
       <span className={`text-base material-symbols-outlined -mb-[5px] ${otherCss}`}>{icon}</span>
@@ -19,7 +16,7 @@ function EventActionButton({ icon, label, action, otherCss })
 
 export default function EventsListEntry({ event })
 {
-  var { user, notify, selectedDay, allEvents, allEvents_modifyEvents, allEvents_deleteEvents, selectedEvent, setSelectedEvent, setShowEventModal, setModifyRepeated } = useContext(GlobalContext)
+  var { user, notify, selectedDay, allEvents_modifyEvents, allEvents_deleteEvents, selectedEvent, setSelectedEvent, setIsCreatingNewEvent, setShowEventModal, setModifyRepeated, setDuplicatedEvent } = useContext(GlobalContext)
 
   const [trucateDescription, setTruncateDescription] = useState(true)
   const truncateLongText = (text, max_chars) => {
@@ -68,6 +65,7 @@ export default function EventsListEntry({ event })
   const [confirmRepeatedModify, setConfirmRepeatedModify] = useState(false);
 
   const handleEdit = (modifyRepeated) => {
+    setIsCreatingNewEvent(true)
     setConfirmRepeatedModify(false)
     setSelectedEvent(event)
     setModifyRepeated(modifyRepeated)
@@ -93,16 +91,16 @@ export default function EventsListEntry({ event })
       setConfirmDelete(false);
       setDeletingEvents(null);
       allEvents_deleteEvents(events)
-      if (deleteAllRepeatedEvents) notify("Calendario", `${events.length} ${types} eliminat${event.isTask ? "e" : "i"}`)
-      else notify("Calendario", `${type} eliminat${event.isTask ? "a" : "o"}`)
+      if (deleteAllRepeatedEvents) notify([{type:"Calendario", message:`${events.length} ${types} eliminat${event.isTask ? "e" : "i"}`}])
+      else notify([{type:"Calendario", message:`${type} eliminat${event.isTask ? "a" : "o"}`}])
       if (event === selectedEvent) {
-        // TODO dipende da come voglio che funzioni
+        // in base a come voglio che funzioni
         //setShowEventModal(false);
         setSelectedEvent(null);
       }
     } catch (error) {
       console.error('Error deleting event:', error);
-      notify("error", error.message);
+      notify([{type:"error", message:error.message}])
     } 
   }
 
@@ -133,10 +131,10 @@ export default function EventsListEntry({ event })
       const res = await modifyEvent(modified_task, user);
       if (!res) throw new Error("Non è stato possibile modificare l'attività")
       allEvents_modifyEvents([modified_task])
-      if (!e.target.checked) notify("Calendario", "Attvitià completata")
+      if (!e.target.checked) notify([{type:"Calendario", message:"Attvitià completata"}])
     } catch(error) {
       console.error("Non è stato possibile modificare l'attività")
-      notify("error", error.message)
+      notify([{type:"error", message:error.message}])
     }
   }
 
@@ -155,8 +153,13 @@ export default function EventsListEntry({ event })
   const completed = event.isTask?.completed;
 
   const lastsMoreDaysDisplayHour = () => {
-    if (event.lastsMoreDays.num == 1) return <h1 className="text-xl font-bold">Dalle {dayjs(event.begin).format("HH:mm")}</h1>
-    else if (event.lastsMoreDays.num == event.lastsMoreDays.total) return <h1 className="text-xl font-bold">Fino alle {dayjs(event.end).format("HH:mm")}</h1>
+    if (event.lastsMoreDays.num === 1) return <h1 className="text-base font-bold">Dalle {dayjs(event.begin).format("HH:mm")}</h1>
+    else if (event.lastsMoreDays.num === event.lastsMoreDays.total) return <h1 className="text-base font-bold">Fino alle {dayjs(event.end).format("HH:mm")}</h1>
+  }
+
+  const duplicateEvent = () => {
+    setDuplicatedEvent(event)
+    setShowEventModal(true)
   }
 
   return (
@@ -166,7 +169,7 @@ export default function EventsListEntry({ event })
       <div className={`flex relative items-center ${completed ? "border-0" : "border-b-2"} w-full ${labelsBorderContrast[event.label]}`}>
         { event.isTask && <input type="checkbox" checked={event.isTask.completed} 
                                  className={`rounded cursor-pointer absolute left-1 w-5 h-5 ${labelsAccent[event.label]}`} onChange={handleCompleteTask}/> }
-        <h2 className={`text-left text-xl font-semibold ${event.isTask ? "ml-8" : "ml-2"} ${completed ? "line-through ml-8" : labelsTextContrast[event.label]}`}>{event.title} {lastsMoreDaysFormat()}</h2>
+        <h2 style={{scrollbarWidth:"none"}} className={`text-left text-xl font-bold overflow-auto mr-2 ${event.isTask ? "ml-8" : "ml-2"} ${completed ? "line-through ml-8" : labelsTextContrast[event.label]}`}>{event.title} {lastsMoreDaysFormat()}</h2>
       </div>
       { !completed && <div>
         { !event.allDay && <div className={`pl-2 border-b-2 ${labelsBorderContrast[event.label]}`}>
@@ -204,7 +207,7 @@ export default function EventsListEntry({ event })
               />}
               </>
             }
-            <EventActionButton icon="content_copy" label="copia" action={() => alert("TODO")}/>
+            <EventActionButton icon="content_copy" label="copia" action={duplicateEvent}/>
           </div>
         </div>
         { event.description && <div style={{scrollbarWidth: "thin"}} className="text-base py-2 border-b overflow-auto">

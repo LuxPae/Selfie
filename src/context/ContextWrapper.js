@@ -135,8 +135,10 @@ export default function ContextWrapper({ children })
   }
 
   const [ selectedEvent, setSelectedEvent ] = useState(null);
+  const [ isCreatingNewEvent, setIsCreatingNewEvent ] = useState(false);
   const [ showEventModal, setShowEventModal ] = useState(false);
   const [ showEventsList, setShowEventsList ] = useState(false);
+  const [ duplicatedEvent, setDuplicatedEvent ] = useState(null)
 
   //TODO poi da togliere, forse
   //const [ newUser, setNewUser ] = useState(null);
@@ -145,24 +147,23 @@ export default function ContextWrapper({ children })
   const [ newPicture, setNewPicture ] = useState("");
   const [ newBio, setNewBio ] = useState("");
 
-  //TODO https://stackoverflow.com/questions/63143315/how-to-call-a-function-every-x-seconds-with-updated-state-react
   const [ currentNotification, setCurrentNotification ] = useState(null)
   const [ showNotification, setShowNotification ] = useState(false);
   const [ pendingNotifications, setPendingNotifications ] = useState([])
-  const notify = (type, message) => {
-    const notification = { type, message }
-    const new_pending_notifications = [...pendingNotifications, notification]
-    console.log("Added notification", notification)
-    console.log("New array", new_pending_notifications)
+  const notify = (notifications) => {
+    setShowNotification(true)
+    const new_pending_notifications = [...pendingNotifications, ...notifications]
+    //console.log("Added notifications", notifications)
+    //console.log("All pendingNotifications", new_pending_notifications)
     setPendingNotifications(new_pending_notifications)
   }
 
 
-  const [ modifyRepeated, setModifyRepeated] = useState(false);
+  const [ modifyRepeated, setModifyRepeated] = useState(false)
 
   const [ filters, setFilters ] = useState({ white: true, red: true, orange: true, yellow: true, green: true, cyan: true, blue: true })
 
-  const [ shownCalendarType, setShownCalendarType ] = useState("tutti");
+  const [ shownCalendarType, setShownCalendarType ] = useState("tutti")
 
   const [ showCompletedTasks, setShowCompletedTasks ] = useState(false)
 
@@ -201,6 +202,10 @@ export default function ContextWrapper({ children })
       setShowEventsList,
       selectedEvent,
       setSelectedEvent,
+      isCreatingNewEvent,
+      setIsCreatingNewEvent,
+      duplicatedEvent,
+      setDuplicatedEvent,
 
       currentNotification,
       setCurrentNotification,
@@ -224,5 +229,5 @@ export default function ContextWrapper({ children })
     }}>
       {children}
     </GlobalContext.Provider>
-  );
+  )
 }

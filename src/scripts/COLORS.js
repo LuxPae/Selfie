@@ -17,6 +17,21 @@
 // così è più organizzato
 
 
+export const colors = {
+  BG: {
+    LIGHT: {
+      th_purple: ""
+    },
+    MEDIUM: {
+      th_purple: ""
+    },
+    DARK: {
+      th_purple: ""
+    }
+  }
+}
+
+
 /// main COLORS
 export const MAIN_BG = "bg-zinc-900" // #18181b
 export const MAIN_BORDER_DARK = "border-zinc-900"
@@ -25,6 +40,7 @@ export const MAIN_TEXT_LIGHT = "text-zinc-200"
 export const MAIN_TEXT_MEDIUM = "text-zinc-500"
 export const MAIN_TEXT_DARK = "text-zinc-700"
 export const MAIN_HOVER_TEXT = "hover:text-zinc-400"
+export const INVERTED_HOVER_TEXT = "hover:text-zinc-700"
 export const MAIN_BG_LIGHT = "bg-zinc-400"
 
 /// calendars COLORS
