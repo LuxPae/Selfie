@@ -41,7 +41,7 @@ const HomeVanilla = () => {
     //console.log(localStorage.getItem("event_from_home"))
     navigate("/calendar")
   }
-  //TODO come in Calendar
+  //TD come in Calendar
   const goToNote = (note) => {
     if (note) {
       localStorage.setItem("note_from_home", JSON.stringify({...note}))
@@ -58,7 +58,7 @@ const HomeVanilla = () => {
     getAllEvents(user)
       .then(fetchedEvents => {
         allEvents = fetchedEvents
-        //TODO
+        //TD
         //createEventsPreview()
         createEventsView()
         //createTasksPreview()
@@ -309,7 +309,7 @@ const HomeVanilla = () => {
     }
   }
 
-  //TODO? non è così importante
+  //TD? non è così importante
   const createEmptyPage = () => {
     let events_div = document.getElementById("events")
     events_div.replaceChildren()
@@ -346,7 +346,7 @@ const HomeVanilla = () => {
     })
   }
 
-  //TODO cambia il colore di sfondo
+  //TD cambia il colore di sfondo
   const renderView = () => {
     const bollini_div = views.map(view_name => ({div:document.getElementById(`bollino_${view_name}`), name:view_name}))
     bollini_div.map(b => {
@@ -421,7 +421,7 @@ const HomeVanilla = () => {
     setUserInfo()
     fetchEvents()
 
-    //TODO come sopra (ognuno nel suo fetch)
+    //TD come sopra (ognuno nel suo fetch)
     createNotesPreview()
     createNotesView()
     createPomodoroView()

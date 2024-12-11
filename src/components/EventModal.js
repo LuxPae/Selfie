@@ -48,6 +48,7 @@ export default function EventModal() {
 
   const [oldEndDate, setOldEndDate] = useState(dayjs(formData.end))
   const [selectingEndDate, setSelectingEndDate] = useState(false)
+  const [selectingEndHour, setSelectingEndHour] = useState(false)
 
   const [isCreatingOrModifying, setIsCreatingOrModifying] = useState(false)
   const [allDay, setAllDay] = useState(false)
@@ -98,12 +99,14 @@ export default function EventModal() {
     }
     setFormData(newFormData)
     setOldEndDate(dayjs(newFormData.end))
-    setSelectingEndDate(false)
+    if (from === "date") setSelectingEndDate(false)
+    else setSelectingEndHour(false)
   }
 
-  const handleConfirmEndDate = () => {
+  const handleConfirmEndDate = (from) => {
+    if (from === "date") setSelectingEndDate(false)
+    else setSelectingEndHour(false)
     setOldEndDate(dayjs(formData.end))
-    setSelectingEndDate(false)
   }
 
   const handleChangeEndDate = (e) => {
@@ -120,16 +123,16 @@ export default function EventModal() {
     setFormData(newFormData)
   }
 
-  const cancelEndDate = () => {
+  const cancelEndDate = (from) => {
     const oldFormDataEnd = dayjs(formData.end)
-    //console.log("resetted end:", oldFormDataEnd)
     const newFormData = {
       ...formData,
       end: oldEndDate.valueOf()
     }
     setOldEndDate(oldFormDataEnd)
     setFormData(newFormData)
-    setSelectingEndDate(false)
+    if (from === "date") setSelectingEndDate(false)
+    else setSelectingEndHour(false)
   }
   // ~ END DATE
   
@@ -170,7 +173,6 @@ export default function EventModal() {
     setSelectingEndsOn(false)
   }
 
-  //TODO guarda, se proprio volessi potrei fare che quando si resetta e il tipo è day sceglie il giorno successiva ecc... per gli altri tipi
   const resetEndsOn = () => {
     const resettedDate = current_hour_date(dayjs(formData.begin), dayjs(formData.begin))
     console.log("resetted end date:", resettedDate.format("dddd D MMMM YYYY HH:mm"))
@@ -257,7 +259,7 @@ export default function EventModal() {
 
   const handleChangeAllDay = () => {
     const new_value = !allDay
-    const new_begin = dayjs(formData.begin).startOf("day")
+    const new_begin = new_value ? dayjs(formData.begin).startOf("day") : oldBeginDate
     const newFormData = {
       ...formData,
       begin: new_begin,
@@ -332,7 +334,6 @@ export default function EventModal() {
   }
   // ~ VALIDATORS
 
-  //TODO guarda, se proprio volessi potrei fare che quando si resetta e il tipo è day sceglie il giorno successiva ecc... per gli altri tipi
   const handleChangeRepeatedEvery = (e) => {
     const value = e.target.value
     switch (value) {
@@ -527,15 +528,14 @@ export default function EventModal() {
 
   }
 
-  const formattedEndDate = useMemo(() => {
+  const formattedEndDate = (() => {
     const begin = dayjs(formData.begin)
     const end = dayjs(formData.end)
     var formattedDate = ""
     if (end.startOf("day").isSame(begin.startOf("day"))) formattedDate = "Lo stesso giorno"
     else formattedDate = end.format("dddd D MMMM YYYY")
-    formattedDate += " alle "+end.format("HH:mm")
     return formattedDate
-  }, [formData.end, formData.begin])
+  })()
 
   useEffect(() => {
     if (duplicatedEvent) {
@@ -573,7 +573,7 @@ export default function EventModal() {
   //}, [formData])
 
   return (
-    <div onKeyPress={e => { if(e.key === 'Enter') handleSubmit()}} className={`h-screen max-w-auto ${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
+    <div onKeyPress={e => { if(e.key === 'Enter') handleSubmit()}} className={`h-screen md:h-full max-w-auto ${colors.CALENDAR_BG_DARK} w-100 border ${colors.MAIN_BORDER_DARK} rounded-xl`}>
       <header className={`${colors.CALENDAR_BG_MEDIUM} px-4 py-1 pb-6 flex rounded-t-lg justify-between items-start`}>
         <div className="px-3"></div>
         <div className="flex flex-col justify-center items-center">
@@ -620,8 +620,8 @@ export default function EventModal() {
           </span>
         </button>
       </header>
-      { validationError && <p className={`flex border ${colors.MAIN_BORDER_LIGHT} justify-center -translate-y-3 ${colors.MAIN_TEXT_LIGHT} ${colors.CALENDAR_BG_DARK}`}>{validationError}</p> }
-      <div style={{scrollbarWidth: "thin"}} className="flex flex-col items-center max-w-full min-w-[450px] p-3 max-h-[500px] overflow-auto">
+      { validationError && <p className={`text-center p-1 flex border ${colors.MAIN_BORDER_LIGHT} justify-center -translate-y-3 ${colors.MAIN_TEXT_LIGHT} ${colors.CALENDAR_BG_DARK}`}>{validationError}</p> }
+      <div style={{scrollbarWidth: "thin"}} className="flex flex-col items-center max-w-full md:min-w-[450px] p-3 max-h-[500px] overflow-y-auto overflow-x-hidden">
         <input className={`rounded my-3 text-xl font-semibold p-3 text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_FOCUS_BG}`} type="textarea" name="title" placeholder="Titolo" value={formData.title} onChange={handleChange} maxLength="50" required />
         <div className="mb-4 mt-2 text-white flex items-center justify-center">
           <span onClick={handleChangeAllDay} tabIndex="0" onKeyPress={(e) => { if (e.key === ' ') handleChangeAllDay() }}
@@ -653,25 +653,40 @@ export default function EventModal() {
             :
             <Button click={() => setSelectingBeginHour(true)} label={dayjs(formData.begin).format("HH:mm")} otherCss="mb-4"/>
           }
-          { !formData.isTask && <>
-            <span className="mb-2">Finisce</span>
-            { selectingEndDate ? <div className="flex flex-col mb-4">
+        </div>}
+        { !formData.isTask && <>
+          <span className="mb-2">Finisce</span>
+          { selectingEndDate ? <div className="flex flex-col mb-4">
+              <div className="border-b mb-1 pb-2 flex flex-col items-center justify-center space-x-2">
+                <div className="flex items-center mb-2 space-x-2">
+                  <span>il </span>
+                  <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                          name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
+                    { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
+                  </select>
+                  <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                          name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
+                    { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                  </select>
+                  <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                          name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
+                    { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center justify-center">
+                <button type="button" className="material-symbols-outlined" onClick={() => handleConfirmEndDate("date")}>check</button>
+                <div className="p-1 px-4"><Button click={() => resetEndDate("date")} label="Reset"/></div>
+                <button type="button" className="material-symbols-outlined" onClick={() => cancelEndDate("date")}>close</button>
+              </div>
+            </div>
+            :
+            <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
+          }
+          { !allDay && <div className="flex flex-col items-center">
+            <span className="mb-1">Alle</span>
+            { selectingEndHour ? <div className="flex flex-col mb-4">
                 <div className="border-b mb-1 pb-2 flex flex-col items-center justify-center space-x-2">
-                  <div className="flex items-center mb-2 space-x-2">
-                    <span>il </span>
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
-                            name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
-                      { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
-                    </select>
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
-                      { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
-                    </select>
-                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
-                            name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
-                      { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
-                    </select>
-                  </div>
                   <div className="flex items-center space-x-2">
                     <p> alle </p>
                     <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
@@ -692,10 +707,10 @@ export default function EventModal() {
                 </div>
               </div>
               :
-              <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
+              <Button click={() => setSelectingEndHour(true)} label={dayjs(formData.end).format("HH:mm")} otherCss="mb-4"/>
             }
-          </>}
-        </div>}
+          </div>}
+        </>}
         { selectedEvent ? 
           <>
           <div className="my-4 p-2 flex flex-col max-w-[300px] border border-red-500 text-center">
@@ -779,9 +794,11 @@ export default function EventModal() {
             </div>
           </div>}
         </>}
-        <textarea style={{scrollbarWidth: "thin"}}
-          className={`rounded p-2 my-3 mb-4 min-w-[400px] min-h-[90px] text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
-          name="description" placeholder="Descrizione" value={formData.description} onChange={handleChange} />
+        <div className="w-full flex justify-center">
+          <textarea style={{scrollbarWidth: "thin"}}
+            className={`rounded p-2 my-3 mb-4 w-full min-h-[90px] text-center placeholder:text-white ${colors.BUTTON_BG} ${colors.BUTTON_HOVER_BG}`}
+            name="description" placeholder="Descrizione" value={formData.description} onChange={handleChange} />
+        </div>
         <div className="flex items-center justify-center gap-x-2">
           {colors.labelsNames.map((label, i) => (
             <span key={i}
@@ -797,3 +814,72 @@ export default function EventModal() {
     </div>
 )
 }
+
+/*
+        { !allDay && <div className="flex flex-col items-center">
+          <span className="mb-1">{formData.isTask ? "Alle" : "Inizia alle"}</span>
+          { selectingBeginHour ? <div className="flex flex-col items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                        name="hour" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("HH")}>
+                  { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                </select>
+                <p>:</p>
+                <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                        name="minute" onChange={handleChangeBeginDate} defaultValue={dayjs(formData.begin).format("mm")}>
+                  { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
+                </select>
+              </div>
+              <div className="mt-2 pt-1 border-t flex items-center justify-center">
+                <button type="button" className="material-symbols-outlined" onClick={handleConfirmBeginDate}>check</button>
+                <div className="p-1 px-4"><Button click={resetBeginHour} label="Reset"/></div>
+                <button type="button" className="material-symbols-outlined" onClick={cancelBeginDate}>close</button>
+              </div>
+            </div>
+            :
+            <Button click={() => setSelectingBeginHour(true)} label={dayjs(formData.begin).format("HH:mm")} otherCss="mb-4"/>
+          }
+          { !formData.isTask && <>
+            <span className="mb-2">Finisce</span>
+            { selectingEndDate ? <div className="flex flex-col mb-4">
+                <div className="border-b mb-1 pb-2 flex flex-col items-center justify-center space-x-2">
+                  <div className="flex items-center mb-2 space-x-2">
+                    <span>il </span>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`}
+                            name="day" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).date()}>
+                      { daysInMonthArray(dayjs(formData.end)).map(day => <option key={day} value={day}>{day}</option>) }
+                    </select>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="month" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).month()}>
+                      { monthsArray.map(i => <option key={i} value={i}>{monthsNames[i]}</option>) }
+                    </select>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="year" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).year()}>
+                      { yearsChoiceArray.map(year => <option key={year} value={year}>{year}</option>) }
+                    </select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <p> alle </p>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="hour" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).hour()}>
+                      { hoursChoiceArray.map(hour => <option key={hour} value={parseInt(hour)}>{hour}</option>) }
+                    </select>
+                    <p>:</p>
+                    <select className={`appearance-none text-center px-2 py-1 rounded ${colors.BUTTON_BG}`} 
+                            name="minute" onChange={handleChangeEndDate} defaultValue={dayjs(formData.end).minute()}>
+                      { minutesChoiceArray.map(minute => <option key={minute} value={parseInt(minute)}>{minute}</option>) }
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center">
+                  <button type="button" className="material-symbols-outlined" onClick={handleConfirmEndDate}>check</button>
+                  <div className="p-1 px-4"><Button click={resetEndDate} label="Reset"/></div>
+                  <button type="button" className="material-symbols-outlined" onClick={cancelEndDate}>close</button>
+                </div>
+              </div>
+              :
+              <Button click={() => setSelectingEndDate(true)} label={formattedEndDate} otherCss="mb-4"/>
+            }
+          </>}
+        </div>}
+*/

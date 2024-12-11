@@ -8,17 +8,8 @@ const registerUser = async (req, res) => {
   const body = req.body;
 
   try {
-    //TODO da togliere ?
-    if (!body.fullName || !body.email || !body.password || !body.username) {
-      throw new Error("Riempi tutti i campi");
-    }
-
-    //TODO da fare a mano
-    //if (!validator.isEmail(body.email)) throw new Error("Validation: Email is not valid");
-    //if (!validator.isStrongPassword(body.password)) throw new Error("Validation: Password is not strong enough");
-
     const exists = await User.findOne({ email: body.email });
-    if (exists) throw new Error("Validation: Email already exists");
+    if (exists) throw new Error("Esiste già un account associato a questo indirizzo email.");
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(body.password, salt);
@@ -47,13 +38,13 @@ const registerUser = async (req, res) => {
     });
     console.log("> Register successfull");
   } catch (error) {
-    if (error.message.split(':')[0] === "Validation") {
+    if (error.message.split(' ')[0] === "Esiste") {
       res.status(400).json({ message: error.message });
       console.log(" x Registration failed");
     }
     else {
       console.error("Internal Server Error:", error);
-      res.status(500).json({ message: "500 Internal Server Error, User not created" });
+      res.status(500).json({ message: "Errore nel Server. Utente non creato." });
     }
   }
 };

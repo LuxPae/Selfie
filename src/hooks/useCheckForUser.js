@@ -4,7 +4,7 @@ import dayjs from "dayjs"
 
 export default function useCheckForUser()
 {
-  const { dispatchUser, notify } = useContext(GlobalContext)
+  const { dispatchUser, notify, setAllEvents } = useContext(GlobalContext)
 
   useEffect(() => {
     const tokenExpiration = localStorage.getItem("tokenExpiration")
@@ -16,6 +16,7 @@ export default function useCheckForUser()
         localStorage.removeItem("user")
         localStorage.removeItem("tokenExpiration")
         dispatchUser({ type: "LOGOUT" })
+        setAllEvents([])
       }, 5000)
       return;
     }
@@ -30,6 +31,7 @@ export default function useCheckForUser()
         localStorage.removeItem("user")
         localStorage.removeItem("tokenExpiration")
         dispatchUser({ type: "LOGOUT" })
+        setAllEvents([])
       }, 5000)
     }
   }, [])

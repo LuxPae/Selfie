@@ -6,7 +6,6 @@ const GlobalContext = React.createContext({
   newUser: null,
   setNewUser: (new_user) => {},
 
-  //TODO poi da togliere, forse
   newFullName: "",
   setNewFullName: (new_fullName) => {},
   newUsername: "",
@@ -24,6 +23,7 @@ const GlobalContext = React.createContext({
   setSelectedDay: (selectedDay) => {},
 
   allEvents: [],
+  setAllEvents: (events) => {},
   allEvents_initialize: () => {},
   allEvents_createEvents: (events) => {},
   allEvents_modifyEvents: (events) => {},

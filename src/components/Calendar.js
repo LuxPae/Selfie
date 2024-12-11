@@ -44,13 +44,6 @@ const Calendar = () => {
 
     allEvents_initialize()
 
-    const ls_event = JSON.parse(localStorage.getItem("event_from_home"))
-    if (ls_event) {
-      const event_day = dayjs(ls_event.begin).startOf("day")
-      setSelectedDay(event_day)
-      setCalendarDate(event_day.startOf("month"))
-      localStorage.removeItem("event_from_home")
-    }
   }, [user, currentDate, selectedDay])
 
   const filterEventsByDate = (events, date) => events.filter(e => dayjs(date.startOf("day")).isSame(dayjs(e.begin).startOf("day")))
@@ -125,7 +118,6 @@ const Calendar = () => {
     else return "96px"
   }
 
-  // TODO
   const eventsListCss = () => {
     if (!showEventsList) return "w-0 h-0 hidden"
     else if (showEventModal) return "hidden md:block"
@@ -164,10 +156,10 @@ const Calendar = () => {
   <Header/>
 
     <div className="md:flex md:justify-around">
-      <div className={`${eventsListCss()} z-10`}>
+      <div className={`${eventsListCss()} z-10 md:z-0`}>
         { showEventsList && <EventsList events={selectedDayEventsToDisplay}/> }
       </div>
-      <div className={`${EventModalCSS()} z-20`}>
+      <div className={`${EventModalCSS()} z-20 md:z-0`}>
         {showEventModal && <EventModal/>}
       </div>
       <div className={`${CalendarCSS()} z-0`}>

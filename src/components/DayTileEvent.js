@@ -1,21 +1,15 @@
-import { useCallback, useContext } from "react"
+import { useContext } from "react"
 import GlobalContext from "../context/GlobalContext.js"
 import { modifyEvent } from "../API/events.js"
-import dayjs from "dayjs"
 import { labelsBackground } from "../scripts/COLORS.js"
 
 const MAX_CHARS = 5;
 
-//TODO vorrei, sapendo la largezza del calendario, mostrare più o meno caratteri (passo width nei props, ma come la prendo?)
-// quando si schiaccia su un evento si apre il modal per modificarlo
 export default function DayTileEvent({ event })
 {
-  const { user, selectedDay, notify, allEvents_modifyEvents } = useContext(GlobalContext);
-  const selected_date = selectedDay.startOf("day")
-  const event_date = dayjs(event.date).startOf("day")
+  const { user, notify, allEvents_modifyEvents } = useContext(GlobalContext);
 
-  const trimmed_title = () => event.title.length <= MAX_CHARS ? event.title : event.title.slice(0, MAX_CHARS)+"...";
-
+  // Ho deciso di toglierlo
   const handleCompleteTask = async () => {
     if (!event.isTask) return
     const value = !event.isTask.completed
@@ -41,11 +35,14 @@ export default function DayTileEvent({ event })
 
   const completed = event.isTask?.completed
   
-  //TODO tronco il titolo?
   return (
-    <div className="hover:border px-px flex items-center space-x-1" title={event.title}>
-      <span className={`${labelsBackground[event.label]} ${completed ? labelsBackground[event.label]+" opacity-50" : ""} rounded w-3 ${event.isTask ? "h-3 cursor-pointer" : "h-1" } flex items-center justify-center text-black`} onClick={handleCompleteTask}>{completed ? '✓' : ""}</span>
-      <p className={`text-xs leading-none ${completed ? "line-through text-zinc-600" : ""}`}><span className="flex flex-col text-[8px]">{lastsMoreDaysFormat()}</span> {trimmed_title()}</p>
+    <div className={`px-px flex ${event.isTask ? "items-center" : "items-baseline"} space-x-1`}>
+      <span className={`${labelsBackground[event.label]} ${completed ? labelsBackground[event.label]+" opacity-50" : ""} rounded min-w-3 ${event.isTask ? "h-3 cursor-pointer" : "h-1 -translate-y-[2px]" } flex items-center justify-center text-black`}>{completed && '✓'}</span>
+      <p style={{scrollbarWidth: "none"}} className={`text-xs ${completed && "line-through text-zinc-600"} text-left overflow-x-auto -translate-x-px w-8 md:w-20`}>{lastsMoreDaysFormat()} {event.title}</p>
     </div>
   )
 }
+
+/*
+<p className={`text-xs leading-none ${completed ? "line-through text-zinc-600" : ""}`}><span className="flex flex-col text-[8px]">{lastsMoreDaysFormat()}</span> {event.title}</p>
+*/

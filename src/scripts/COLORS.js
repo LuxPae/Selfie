@@ -1,4 +1,3 @@
-//TODO
 // ho pensato che al posto di variabili singole posso fare degli oggetti del tipo:
 // export const MAIN = {
 //   BG: {
@@ -15,7 +14,7 @@
 // }
 // 
 // così è più organizzato
-
+// Purtroppo non verrà fatto :(
 
 export const colors = {
   BG: {
@@ -33,29 +32,33 @@ export const colors = {
 
 
 /// main COLORS
-export const MAIN_BG = "bg-zinc-900" // #18181b
+export const MAIN_BG_LIGHT = "bg-zinc-400"
+export const MAIN_BG_MEDIUM = "bg-zinc-800"
+export const MAIN_BG_DARK = "bg-zinc-900" // #18181b
 export const MAIN_BORDER_DARK = "border-zinc-900"
 export const MAIN_BORDER_LIGHT = "border-neutral-400"
 export const MAIN_TEXT_LIGHT = "text-zinc-200"
 export const MAIN_TEXT_MEDIUM = "text-zinc-500"
 export const MAIN_TEXT_DARK = "text-zinc-700"
-export const MAIN_HOVER_TEXT = "hover:text-zinc-400"
-export const INVERTED_HOVER_TEXT = "hover:text-zinc-700"
-export const MAIN_BG_LIGHT = "bg-zinc-400"
+export const MAIN_HOVER_TEXT = "md:hover:text-zinc-400"
+export const INVERTED_HOVER_TEXT = "md:hover:text-zinc-700"
 
 /// calendars COLORS
 export const CALENDAR_BG_LIGHT = "bg-zinc-600"
 export const CALENDAR_BG_MEDIUM = "bg-neutral-700"
 export const CALENDAR_BG_DARK = "bg-zinc-800"
 export const CALENDAR_ACTIVE_BG_DARK = CALENDAR_BG_DARK
-export const CALENDAR_HOVER_BG_DARK = "hover:bg-zinc-700"
-export const CALENDAR_FOCUS_BG_DARK = "focus:bg-zinc-700"
+export const CALENDAR_HOVER_BG_DARK = "md:hover:bg-zinc-700"
+export const CALENDAR_FOCUS_BG_DARK = "md:focus:bg-zinc-700"
 
 /// buttons COLORS
 export const BUTTON_BG = "bg-zinc-500"
-export const BUTTON_HOVER_BG = "hover:bg-zinc-600"
-export const BUTTON_FOCUS_BG = "focus:bg-zinc-600"
+export const BUTTON_HOVER_BG = "md:hover:bg-zinc-600"
+export const BUTTON_FOCUS_BG = "md:focus:bg-zinc-600"
 export const BUTTON_TEXT = "text-white"
+
+/// error COLORS
+export const ERROR_TEXT = "text-red-500"
 
 /// other COLORS
 export const HOME_GRADIENT_1 = "from-zinc-700"

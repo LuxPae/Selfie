@@ -1,6 +1,7 @@
 import { useEffect, useContext } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import GlobalContext from "../context/GlobalContext.js"
+import Button from "../components/Button.js"
 
 export default function InitialPage()
 {
@@ -16,8 +17,9 @@ export default function InitialPage()
     <h1 className="md:pt-12 text-4xl md:text-6xl text-center md:leading-normal">Benvenuto<br/>in<br/>Selfie</h1>
     <img src="https://img.freepik.com/premium-photo/sloth-touches-camera-taking-selfie-funny-selfie-portrait-animal_323015-1968.jpg?w=360"
          className="h-[400px] md:h-[600px] rounded" alt="Selfie logo" />
-    <h2 className="my-40 screen text-center text-3xl leading-normal">
-      Esegui<br/>l'<Link to="/login" className="text-blue-500">accesso</Link> o <Link to="/register" className="text-blue-500">registrati</Link><br/>per continuare
+    <h2 className="my-40 screen text-center text-xl leading-normal">
+      <Button label="Accedi" click={() => navigate("/login")} otherCss="py-px"/> o <Button label="Registrati" click={() => navigate("/register")} otherCss="py-px"/>
+      <br/>per continuare
     </h2>
   </div>
   </>

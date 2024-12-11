@@ -29,22 +29,20 @@ export default function EventsListEntry({ event })
     setShowMore(false)
   }, [selectedDay])
 
-  const time_span = () => {
+  const timeSpan = () => {
     if (dayjs(event.begin).isSame(dayjs(event.end))) return dayjs(event.begin).format("HH:mm") 
     else return `${dayjs(event.begin).format("HH:mm")} ~ ${dayjs(event.end).format("HH:mm")}`
   }
 
   const [deletingEvents, setDeletingEvents] = useState(null)
 
-  //TODO
   const duration = () => {
     const begin = dayjs(event.begin)
     const end = dayjs(event.end)
     const d_ms = end.diff(begin)
     const d_min = d_ms/(1000*60)
-    const d_h = d_ms/(1000*60*60)
+    const d_h = d_min/60
 
-    //TODO vabbè qua ci sono altre mille cose da fare, ad esempio?
     const hours = Math.floor(d_h);
     const minutes = d_min - hours*60
 
@@ -54,7 +52,6 @@ export default function EventsListEntry({ event })
       else return ""
     })()
     const hours_minutes_delimiter = hours > 0 && minutes > 0 ? " e " : ""
-
     const minutes_str = minutes > 0 ? minutes+" minuti" : ""
 
     return hours_str + hours_minutes_delimiter + minutes_str;
@@ -162,6 +159,17 @@ export default function EventsListEntry({ event })
     setShowEventModal(true)
   }
 
+  const sameHour = dayjs(event.begin).isSame(dayjs(event.end))
+
+  const lastsMoreDaysEndInfo = () => {
+    const lmd = event.lastsMoreDays
+    if (!lmd) return
+    const end_date = dayjs(event.end).format("dddd D MMMM YYYY")
+    const end_hour = dayjs(event.end).format("HH:mm")
+    if (event.allDay) return end_date
+    else return end_date+" alle "+end_hour
+  }
+
   return (
   <>
   <div className={`snap-center mb-6 flex flex-col max-w-sm rounded ${labelsBackground[event.label]} ${labelsTextContrast[event.label]} ${completed ? "opacity-50 hover:opacity-100" : ""}`}>
@@ -174,7 +182,7 @@ export default function EventsListEntry({ event })
       { !completed && <div>
         { !event.allDay && <div className={`pl-2 border-b-2 ${labelsBorderContrast[event.label]}`}>
           { !event.lastsMoreDays ?
-            <div className="text-base font-semibold">{event.isTask ? dayjs(event.begin).format("HH:mm") : time_span()}</div>
+            <div className="text-base font-semibold">{event.isTask ? dayjs(event.begin).format("HH:mm") : timeSpan()}</div>
             :
             lastsMoreDaysDisplayHour()
           }
@@ -210,20 +218,20 @@ export default function EventsListEntry({ event })
             <EventActionButton icon="content_copy" label="copia" action={duplicateEvent}/>
           </div>
         </div>
-        { event.description && <div style={{scrollbarWidth: "thin"}} className="text-base py-2 border-b overflow-auto">
+        { event.description && <div style={{scrollbarWidth: "thin"}} className={`text-base pl-2 py-1 border-b-2 ${labelsBorderContrast[event.label]} overflow-auto`}>
               {trucateDescription ? 
                 truncateLongText(event.description, MAX_CHARS_DESC) 
                 : 
                 <span>{event.description}<span className="material-symbols-outlined text-sm cursor-pointer" onClick={() => setTruncateDescription(true)}>&nbsp;vertical_align_top</span></span>
               }
         </div>}
-        <div className="translate-y-1">
+        <div className="ml-2 -translate-y-px w-screen">
           { showMore ?
             <div>
-              <div onClick={() => setShowMore(false)} className="cursor-pointer material-symbols-outlined">arrow_drop_down</div>
-              <ul className="ml-4 list-['🠒']">
-                {/* TODO devo ancora fare che quando si modifica cambia la data: l'ho fatto e non funziona, forse ho risolto, devo controllare*/}
-                {!event.allDay && <li>&nbsp;Dura {duration()}</li>}
+              <div onClick={() => setShowMore(false)} className="cursor-pointer text-2xl -translate-x-1 -translate-y-[2px]">⌄</div>
+              <ul className="ml-2 mb-1 text-base list-['›']"> {/*🠒 freccettina che usavo prima*/}
+                {(!event.allDay && !sameHour && !event.lastsMoreDays) && <li>&nbsp;Dura {duration()}</li>}
+                { (event.lastsMoreDays && event.lastsMoreDays.num === 1) && <li>&nbsp;Finisce {lastsMoreDaysEndInfo()}</li>}
                 <li>&nbsp;Creat{event.isTask ? "a" : "o"} il {dayjs(event.createdAt).format("D MMMM YYYY")} alle {dayjs(event.createdAt).format("HH:mm")}</li>
                 { !dayjs(event.createdAt).isSame(dayjs(event.updatedAt)) && <li>&nbsp;Modificat{event.isTask ? "a" : "o"} il {dayjs(event.updatedAt).format("D MMMM YYYY")} alle {dayjs(event.updatedAt).format("HH:mm")}</li> }
                 {event.repeated ? <>
@@ -236,7 +244,7 @@ export default function EventsListEntry({ event })
               </ul>
             </div>
             :
-            <div onClick={() => setShowMore(true)} className="cursor-pointer material-symbols-outlined">arrow_right</div>
+            <div onClick={() => setShowMore(true)} className="cursor-pointer text-2xl">›</div>
           }
         </div>
       </div>}

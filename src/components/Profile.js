@@ -1,29 +1,26 @@
-//TODO
-// - renderlo più carino (e farlo anche per mobile, non si vede la sezione che stai editanto, ma solo i dati che stai cambiando)
-
 import React, { useState, useEffect, useContext } from "react";
 import GlobalContext from "../context/GlobalContext.js"
 import { useNavigate } from "react-router-dom";
 import ProfileEdit from "../components/ProfileEdit.js"
 import ProfilePreview from "../components/ProfilePreview.js"
 import Header from "../components/Header.js"
-import NiceButton from "../components/NiceButton.js"
+import Button from "../components/Button.js"
 import axios from "axios"
 import { modifyUser } from "../API/profile.js"
-import { validateUser } from "../scripts/userValidators.js"
+import { validateModifiedUser } from "../scripts/userValidators.js"
 import useCheckForUser from "../hooks/useCheckForUser.js"
 import dayjs from "dayjs"
 
 const Profile = () => {
   useCheckForUser();
 
-  var { user, dispatchUser, notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio, allEvents, allEvents_initialize, currentDate } = useContext(GlobalContext);
+  var { user, dispatchUser, notify, newFullName, setNewFullName, newPicture, setNewPicture, newUsername, setNewUsername, newBio, setNewBio, allEvents, allEvents_initialize, currentDate, setAllEvents } = useContext(GlobalContext);
 
   if (allEvents.length <= 0) allEvents_initialize()
 
   const [ loadingError, setLoadingError ] = useState("");
+  const [ error, setError ] = useState("");
   const [ modifyingState, setModifyingState ] = useState(false);
-  const [ button_edit_text_color, setButtonEditTextColor ] = useState(false);
 
   const [ modifiedUser, setModifiedUser ] = useState(user);
 
@@ -57,18 +54,19 @@ const Profile = () => {
   }, [user, newFullName, newUsername, newPicture, newBio])
 
   useEffect(() => {
-    setButtonEditTextColor(modifyingState ? "red" : "green");
+    setError("")
   }, [modifyingState]);
 
   const handleLogout = () => {
     localStorage.removeItem("user")
     localStorage.removeItem("tokenExpiration")
     dispatchUser({ type: "LOGOUT" });
+    setAllEvents([])
     navigate("/");
   }
 
   const handleDeleteUser = async () => {
-    //TODO questo così non è il massimo, magari quando avrò sistemato proverò a rimetterlo dentro al try
+    setAllEvents([])
     const id = user._id;
     const token = user.token;
     localStorage.removeItem("user")
@@ -90,22 +88,22 @@ const Profile = () => {
     }
   }
 
-  const handleEditProfile = async (e) => {
-    e.preventDefault();
-    //console.log("New profile info:");
-    //console.log("  Full name:", newFullName);
-    //console.log("  Username:", newUsername);
-    //console.log("  Picture:", newPicture);
-    //console.log("  Bio:", newBio);
-    let new_user = {
-      ...user,
+  const handleEditProfile = async () => {
+    const editData = {
       fullName: newFullName,
       username: newUsername,
       picture: newPicture,
       bio: newBio
     }
+    const new_error = validateModifiedUser(editData)
+    setError(new_error)
+    if (new_error) return
+
+    let new_user = {
+      ...user,
+      ...editData
+    }
     try {
-      validateUser(new_user);
       const response = await modifyUser(new_user);
       localStorage.setItem("user", JSON.stringify(response))
       dispatchUser({ type: "MODIFY", payload: response });
@@ -113,7 +111,6 @@ const Profile = () => {
       setModifyingState(false);
     }
     catch(error) {
-      //TODO qui ci vanno gli errori di validazione
       notify([{type:"error", message:error.message}])
     }
   }
@@ -136,68 +133,35 @@ const Profile = () => {
 
       {modifyingState ? 
         <>
-        <div className="items-center justify-around flex flex-nowrap">
-          <div className="hidden sm:block"><ProfilePreview user={modifiedUser}/></div>
-          <aside> <ProfileEdit/> </aside>
+        <div className="flex items-center justify-center md:space-x-4">
+          <div className="hidden md:block"><ProfilePreview user={modifiedUser} modifying={modifyingState}/></div>
+          <ProfileEdit error={error} submitChanges={handleEditProfile}/>
         </div>
         </>
         : 
-        <div className="w-full pt-20 justify-center">
-          <ProfilePreview user={user} />
+        <div className="">
+          <ProfilePreview user={user}/>
         </div>
       }
-      <div id="buttons" className="flex flex-col p-5 max-w-fit ">
-        { modifyingState ?
-          <>
-          <NiceButton
-            text="Annulla"
-            colour="red"
-            when_clicked={() => setModifyingState(!modifyingState)}
-          />
-          <NiceButton
-            text="Salva modifiche"
-            colour="green"
-            when_clicked={handleEditProfile}
-          />
-          </>
+      <div className="px-4 mt-4">
+        { modifyingState ? <div className="flex space-x-4">
+            <Button click={handleEditProfile} label="Salva modifiche"/>
+            <Button click={() => setModifyingState(!modifyingState)} label="Annulla"/>
+          </div>
           :
           <>
-          <div>
-            <NiceButton
-              //TODO da aggiustare quando si hovera il bottone, forse è dello stesso colore dello sfondo?
-              text="Modifica profilo"
-              extra={<span className="h-4 material-symbols-outlined">edit</span>}
-              colour={button_edit_text_color}
-              when_clicked={() => setModifyingState(!modifyingState)}
-            />
-            <NiceButton
-              text="Logout"
-              colour="blue"
-              when_clicked={handleLogout}
-            />
-            <NiceButton
-              text="Elimina Account"
-              colour="red"
-              when_clicked={() => setConfirmDelete(true)}
-            />
-            { confirmDelete && <>
-              <div className="text-white flex space-x-4">
-                <div>Conferma di voler eliminare il tuo account:</div>
-                <button className="cursor-pointer hover:bg-red-700 border rounded border-red-700 px-4" onClick={handleDeleteUser}>Sì</button>
-                <button className="cursor-pointer hover:bg-green-700 border rounded border-green-700 px-4" onClick={() => setConfirmDelete(false)}>No</button>
+          <div className="flex justify-between md:justify-center md:space-x-4">
+            <Button click={() => setModifyingState(!modifyingState)} label="Modifica profilo" otherCss="h-fit"/>
+            <Button click={handleLogout} label="Logout" otherCss="h-fit"/>
+            { confirmDelete ? <div className="flex space-x-4">
+                <Button click={handleDeleteUser} label="check" otherCss="material-symbols-outlined"/>
+                <Button click={() => setConfirmDelete(false)} label="close" otherCss="material-symbols-outlined"/>
               </div>
-            </>}
+              : <Button click={() => setConfirmDelete(true)} label="Elimina account"/>
+            }
           </div>
           </>
         }
-      </div>
-      <div className="">
-        <h2 className="text-xl">Info</h2>
-        <ul className="">
-          <li>Voci nel Calendario: {allEvents.length}</li>
-          <li>Eventi: {allEvents.filter(e => !e.isTask).length} (passati: {allEvents.filter(e => !e.isTask && dayjs(e.end).isBefore(currentDate)).length})</li>
-          <li>Attività: {allEvents.filter(e => e.isTask).length} (completate: {allEvents.filter(e => e.isTask && e.isTask.completed).length})</li>
-        </ul>
       </div>
       </>
   );

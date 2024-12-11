@@ -27,7 +27,6 @@ export default function ContextWrapper({ children })
   const [user, dispatchUser] = useReducer(userReducer, null);
 
   const [ currentDate, setCurrentDate ] = useState(dayjs());
-  localStorage.setItem("currentDate", JSON.stringify(currentDate))
 
   const [calendarDate, setCalendarDate] = useState(currentDate.startOf("month"))
   const [ selectedDay, setSelectedDay ] = useState(currentDate);
@@ -140,8 +139,6 @@ export default function ContextWrapper({ children })
   const [ showEventsList, setShowEventsList ] = useState(false);
   const [ duplicatedEvent, setDuplicatedEvent ] = useState(null)
 
-  //TODO poi da togliere, forse
-  //const [ newUser, setNewUser ] = useState(null);
   const [ newFullName, setNewFullName ] = useState("");
   const [ newUsername, setNewUsername ] = useState("");
   const [ newPicture, setNewPicture ] = useState("");
@@ -172,7 +169,6 @@ export default function ContextWrapper({ children })
       user,
       dispatchUser,
 
-      //TODO togliere?
       newFullName,
       setNewFullName,
       newUsername,
@@ -190,6 +186,7 @@ export default function ContextWrapper({ children })
       setSelectedDay,
 
       allEvents,
+      setAllEvents,
       allEvents_initialize,
       allEvents_createEvents,
       allEvents_modifyEvents,

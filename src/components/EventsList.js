@@ -22,9 +22,8 @@ export default function EventsList({ events }) {
 
   return (
     <>
-    <div className="w-full h-full">
-      <div className={`${colors.CALENDAR_BG_MEDIUM} rounded-lg`}>
-        <header className={`border-b ${colors.CALENDAR_BG_MEDIUM}`}>
+    <div className={`${colors.CALENDAR_BG_MEDIUM} h-screen md:h-full rounded-lg`}>
+        <header className={`border-b rounded-t-lg pt-px`}>
           <div className="pb-2 text-center items-center flex space-x-4 justify-between items-center mx-4 mt-2">
             <button type="button" onClick={openModal}
                     className={`h-12 w-12 material-symbols-outlined text-white text-4xl border-2 rounded-full hover:bg-white ${colors.INVERTED_HOVER_TEXT}`}
@@ -53,7 +52,7 @@ export default function EventsList({ events }) {
             </div>
           </div>
         </div>
-        <div id="events_container" style={{scrollbarWidth: "thin"}} className="h-[400px] max-w-full mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
+        <div style={{scrollbarWidth: "thin"}} className="h-[500px] max-w-full mr-3 overflow-auto snap-y ml-4 mt-4 mb-8">
           { events.length > 0 ?
             <ul>
               { events.map((e, i) => <li key={i}><EventsListEntry event={e}/></li>) }
@@ -64,7 +63,6 @@ export default function EventsList({ events }) {
             </>
           }
         </div>
-      </div>
     </div>
     </>
   )
