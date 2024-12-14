@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const PROFILE_API_URL = "http://localhost:5000/user/profile"
+const PROFILE_API_URL = "http://localhost:5001/user/profile" // TODO: 5000
 
 //export const getUser = async () => {
 //  try {

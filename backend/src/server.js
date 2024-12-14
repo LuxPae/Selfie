@@ -3,10 +3,10 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser")
 
-const { auth } = require("./middleware/auth.js")
+const {auth} = require("./middleware/auth.js")
 
 const dotenv = require("dotenv")
-dotenv.config({ path: __dirname+"/.env"});
+dotenv.config({path: __dirname + "/.env"});
 
 // Initialize express
 const app = express();
@@ -25,7 +25,9 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use("/auth", require("./routes/auth.js"));
 app.use("/user", require("./routes/user.js"));
 app.use("/events", require("./routes/events.js"));
+app.use("/note", require("./routes/note.js"));
+app.use("/timer", require("./routes/timer.js"));
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -13,8 +13,8 @@ export default function Header() {
 
   const navigate = useNavigate()
   const location = useLocation()
-   
-  var { user, showNotification, currentDate } = useContext(GlobalContext) 
+
+  var { user, showNotification, currentDate } = useContext(GlobalContext)
 
   const nav_link_css = (path) => {
     let css = " py-1 px-3 text-center "
@@ -26,7 +26,8 @@ export default function Header() {
   const links = [
     { path: "/calendar", name: "Calendario" },
     { path: "/notes", name: "Note" },
-    { path: "/pomodoro", name: "Pomodoro" }
+    { path: "/pomodoro", name: "Pomodoro" },
+    { path: "/time-machine", name: "TimeMachine" }
   ]
 
   return (

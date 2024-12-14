@@ -1,9 +1,7 @@
-import Header from "./Header.js"
+import TimerPage from "../pages/timer/timer";
 
-export default function Pomodoro()
-{
-  return (<>
-    <Header />
-    <h1 className="text-7xl mt-10">Pomodoro</h1>
-  </>)
+export default function Pomodoro() {
+    return (<>
+        <TimerPage/>
+    </>)
 }

@@ -1,9 +1,11 @@
 import * as colors from "../scripts/COLORS.js"
 import { MAX_EVENTS_NUM } from "../scripts/CONSTANTS.js"
-import { useEffect } from "react"
+import {useContext, useEffect} from "react"
 import { getAllEvents } from "../API/events.js"
 import { useNavigate } from "react-router-dom"
 import dayjs from "dayjs"
+import {getNotes} from "../API/note";
+import GlobalContext from "../context/GlobalContext";
 
 const HomeVanilla = () => {
 
@@ -19,6 +21,8 @@ const HomeVanilla = () => {
   var current_view = views[current_view_index]
   var change_left_clicked = false
   var change_right_clicked = false
+
+  const token = useContext(GlobalContext).user.token;
 
   const getCurrentDate = () => {
     currentDate = dayjs(JSON.parse(localStorage.getItem("currentDate")))
@@ -46,10 +50,10 @@ const HomeVanilla = () => {
     if (note) {
       localStorage.setItem("note_from_home", JSON.stringify({...note}))
       console.log("set note from home", JSON.parse(localStorage.getItem("note_from_home")))
-    } 
+    }
     navigate("/notes")
   }
-  
+
   const note_content_max_chars = 100
   const truncateLongText = (text, max_chars) => text.length <= max_chars ? text : text.slice(0, max_chars)+"..."
 
@@ -69,7 +73,7 @@ const HomeVanilla = () => {
         error = error.message
       })
   }
-  
+
   const note_prova = [
     {
       _id: 1,
@@ -80,27 +84,27 @@ const HomeVanilla = () => {
     },
     {
       _id: 2,
-      title:"La nota lunga", 
-      content:"Anche io sono una nota di prova, ma decisamente più lunga, ciao Riccardo è molto divertente fare il museo con te, eccoci qui, pronti, PEFFOZZA.", 
+      title:"La nota lunga",
+      content:"Anche io sono una nota di prova, ma decisamente più lunga, ciao Riccardo è molto divertente fare il museo con te, eccoci qui, pronti, PEFFOZZA.",
       createAt: dayjs(new Date(2024, 5, 27)).valueOf(),
       updateAt: dayjs(new Date(2024, 5, 27)).valueOf(),
     },
     {
-      _id: 3, 
-      title:"Nota corta 1", 
-      content:"Nota corta 1", 
+      _id: 3,
+      title:"Nota corta 1",
+      content:"Nota corta 1",
       createAt: dayjs(new Date(2024, 5, 27)).valueOf(),
       updateAt: dayjs(new Date(2024, 5, 27)).valueOf(),
     },
     {
       _id: 4,
-      title:"Nota corta 2", 
+      title:"Nota corta 2",
       content:"Nota corta 2",
       createAt: dayjs(new Date(2024, 5, 27)).valueOf(),
       updateAt: dayjs(new Date(2024, 5, 27)).valueOf(),
     }
   ]
-  
+
   const max_notes = 3
   const NoteTemplate = (note) => {
     return (
@@ -139,7 +143,7 @@ const HomeVanilla = () => {
 
   const multipleDaysEventBegin = (event) => multipleDaysEventBeginHour(event) + multipleDaysEventBeginDate(event)
   const multipleDaysEventEnd = (event) => multipleDaysEventEndHour(event) + multipleDaysEventEndDate(event)
-  
+
   const formatEventDate = (event) => {
     const begin = dayjs(event.begin)
     const end = dayjs(event.end)
@@ -177,7 +181,7 @@ const HomeVanilla = () => {
   }
 
   const formatTitle = (event) => {
-    return(`<span class="font-bold">${truncateLongText(event.title, 50)}</span>${lastsMoreDaysEventTitle(event)}`) 
+    return(`<span class="font-bold">${truncateLongText(event.title, 50)}</span>${lastsMoreDaysEventTitle(event)}`)
   }
 
   const descriptionPadding = (event) => event.description ? "py-1" : ""
@@ -241,17 +245,19 @@ const HomeVanilla = () => {
   }
 
   const dateFormat = (date) => dayjs(date).format("dddd DD MMMM YYYY")+" alle "+dayjs(date).format("HH:mm")
-  
-  const createNotesPreview = () => {
+
+  const createNotesPreview = async (token) => {
+    const notesList = await getNotes({token: token});
+
     let notes = document.getElementById("notes")
     notes.replaceChildren()
     let i = 0
-    while (i < max_notes && i < note_prova.length) {
-      notes.innerHTML += NoteTemplate(note_prova[i])
+    while (i < max_notes && i < notesList.length) {
+      notes.innerHTML += NoteTemplate(notesList[i])
       i++
     }
-  
-    for (let note of note_prova) {
+
+    for (let note of notesList) {
       let note_node = document.getElementById(`note_${note._id}`)
       if (note_node) note_node.addEventListener("click", () => goToNote(note))
     }
@@ -279,7 +285,7 @@ const HomeVanilla = () => {
     for (let event of limited_events) {
       events_div.innerHTML += EventTemplate(event)
     }
-  
+
     for (let event of events) {
       let event_node = document.getElementById(`click_event_${event._id}`)
       if (event_node) event_node.addEventListener("click", () => goToEvent(event))
@@ -302,7 +308,7 @@ const HomeVanilla = () => {
     for (let task of limited_tasks) {
       tasks_div.innerHTML += TaskTemplate(task)
     }
-  
+
     for (let task of tasks) {
       let task_node = document.getElementById(`click_task_${task._id}`)
       if (task_node) task_node.addEventListener("click", () => goToEvent(task))
@@ -313,13 +319,13 @@ const HomeVanilla = () => {
   const createEmptyPage = () => {
     let events_div = document.getElementById("events")
     events_div.replaceChildren()
-    const emptyEvent = 
+    const emptyEvent =
       `<div class="border border-gray-600 animate-pulse">
          <p></p> 
       </div>`
     for (let i = 0; i < 4; i++) events_div.innerHTML += emptyEvent
   }
-  
+
   const setUserInfo = () => {
     fetchProfile()
     if (!user) goToInitialPage()
@@ -329,7 +335,7 @@ const HomeVanilla = () => {
     const left_div = document.getElementById("change_view_left")
     left_div.addEventListener("click", () => {
       if (!change_left_clicked) {
-        current_view_index = (current_view_index-1+views.length) % views.length;      
+        current_view_index = (current_view_index-1+views.length) % views.length;
         current_view = views[current_view_index]
         renderView()
         change_left_clicked = true
@@ -338,7 +344,7 @@ const HomeVanilla = () => {
     const right_div = document.getElementById("change_view_right")
     right_div.addEventListener("click", () => {
       if (!change_right_clicked) {
-        current_view_index = (current_view_index+1) % views.length;      
+        current_view_index = (current_view_index+1) % views.length;
         current_view = views[current_view_index]
         renderView()
         change_right_clicked = true
@@ -384,7 +390,7 @@ const HomeVanilla = () => {
     for (let event of limited_events) {
       events_div.innerHTML += EventTemplate(event)
     }
-  
+
     for (let event of events) {
       let event_node = document.getElementById(`click_event_${event._id}`)
       if (event_node) event_node.addEventListener("click", () => goToEvent(event))
@@ -422,7 +428,7 @@ const HomeVanilla = () => {
     fetchEvents()
 
     //TD come sopra (ognuno nel suo fetch)
-    createNotesPreview()
+    createNotesPreview(token)
     createNotesView()
     createPomodoroView()
 

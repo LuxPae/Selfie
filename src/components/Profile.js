@@ -77,7 +77,7 @@ const Profile = () => {
     try {
       console.log("Deleting user", id);
       const res = await axios.delete(
-        `http://localhost:5000/user/profile/${id}`,
+        `http://localhost:5001/user/profile/${id}`, // TODO: 5000
         { headers: { Authorization: `Bearer ${token}` }}
       );
       if (res.status === 200) { console.log("deleted") }
@@ -124,21 +124,21 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="flex justify-center items-center min-h-screen text-3xl">Caricando le informazioni...</div>
-    ) 
+    )
   }
 
   return (
       <>
       <Header/>
 
-      {modifyingState ? 
+      {modifyingState ?
         <>
         <div className="flex items-center justify-center md:space-x-4">
           <div className="hidden md:block"><ProfilePreview user={modifiedUser} modifying={modifyingState}/></div>
           <ProfileEdit error={error} submitChanges={handleEditProfile}/>
         </div>
         </>
-        : 
+        :
         <div className="">
           <ProfilePreview user={user}/>
         </div>

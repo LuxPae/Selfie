@@ -9,7 +9,7 @@ import { validateLogin } from "../scripts/userValidators.js"
 
 import axios from "axios"
 
-const BASE_URL = "http://localhost:5000/auth"
+const BASE_URL = "http://localhost:5001/auth" // TODO: riportare a 5000
 
 export default function Login()
 {
@@ -37,8 +37,8 @@ export default function Login()
 
     try {
       const response = await axios.post(
-        `${BASE_URL}/login`, 
-        { ...formData }, 
+        `${BASE_URL}/login`,
+        { ...formData },
         { headers: { "Content-Type": "application/json" } }
       )
       localStorage.setItem("user", JSON.stringify(response.data))

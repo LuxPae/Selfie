@@ -1,9 +1,9 @@
 import Header from "./Header.js"
+import NotesPage from "../pages/notes/notes";
 
 export default function Notes()
 {
   return (<>
-    <Header />
-    <h1 className="text-9xl mt-10">Notes</h1>
+    <NotesPage />
   </>)
 }

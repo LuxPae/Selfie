@@ -9,10 +9,10 @@
 //     LIGHT: "...",
 //     MEDIUM: "...",
 //     DARK: "...",
-//   }, 
+//   },
 //   etc...
 // }
-// 
+//
 // così è più organizzato
 // Purtroppo non verrà fatto :(
 
@@ -78,7 +78,7 @@ const blue   = "blue-600"
 export const labelsAccent = {
   white: "accent-white",
   red: "accent-red-600",
-  orange: "accent-orange-500", 
+  orange: "accent-orange-500",
   yellow: "accent-yellow-400",
   green: "accent-green-500",
   cyan: "accent-cyan-400",
@@ -87,7 +87,7 @@ export const labelsAccent = {
 export const labelsText = {
   white: "text-white",
   red: "text-red-600",
-  orange: "text-orange-500", 
+  orange: "text-orange-500",
   yellow: "text-yellow-400",
   green: "text-green-500",
   cyan: "text-cyan-400",
@@ -96,7 +96,7 @@ export const labelsText = {
 export const labelsBackground = {
   white: "bg-white",
   red: "bg-red-600",
-  orange: "bg-orange-500", 
+  orange: "bg-orange-500",
   yellow: "bg-yellow-400",
   green: "bg-green-500",
   cyan: "bg-cyan-400",
@@ -105,7 +105,7 @@ export const labelsBackground = {
 export const labelsBorder = {
   white: "border-white",
   red: "border-red-600",
-  orange: "border-orange-500", 
+  orange: "border-orange-500",
   yellow: "border-yellow-400",
   green: "border-green-500",
   cyan: "border-cyan-400",
@@ -129,3 +129,18 @@ export const labelsBorderContrast = {
   cyan: "border-black",
   blue: "border-white"
 }
+
+export const primaryColor = '#BA455F';
+export const primaryColorEndGradient = '#9C2E47';
+
+export const greenColor = '#147917';
+export const greenColorEndGradient = '#106113';
+
+export const yellowColor = 'rgba(255,215,0,0.85)';
+export const yellowColorEndGradient = 'rgba(255,215,0,0.6)';
+
+export const blueColor = 'rgba(3,134,208,0.5)';
+export const blueColorEndGradient = 'rgba(14,158,227,0.2)';
+
+export const grey = "#8A8A8A";
+export const background = "#2b2b2b";

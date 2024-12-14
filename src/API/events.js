@@ -1,7 +1,7 @@
 import axios from "axios"
 import dayjs from "dayjs"
 
-const EVENTS_API_URL = "http://localhost:5000/events"
+const EVENTS_API_URL = "http://localhost:5001/events" // TODO: 5000
 
 export const getAllEvents = async (user) => {
   try {
@@ -10,7 +10,7 @@ export const getAllEvents = async (user) => {
       { headers: { Authorization: `Bearer ${user.token}` }}
     );
     if (res.status === 200) {
-      return res.data; 
+      return res.data;
     } else {
       throw new Error('Failed to fetch events');
       console.log("Failed to fetch events")
@@ -28,7 +28,7 @@ export const getEventsByRepId = async (user, rep_id) => {
       { headers: { Authorization: `Bearer ${user.token}` }}
     );
     if (res.status === 200 && res.data.length > 0) {
-      return res.data; 
+      return res.data;
     } else {
       throw new Error('Failed to fetch events by rep_id');
       console.log("Failed to fetch events by rep_id")
@@ -165,7 +165,7 @@ export const createRepeatedEvent = async (event, user) => {
       }
       console.log(repeated_events)
       return repeated_events
-    } 
+    }
     else if (event.repeatedData.type === "endsAfter") {
       var repeated_events = [];
       const initial_rep_num = event.repeatedData.endsAfter;
@@ -220,7 +220,7 @@ export const modifyEvent = async (event_to_modify, user, modifyRepeated) => {
           ...event_to_modify,
           _id: e._id,
           repeatedData: e.repeatedData,
-          begin: mod_begin,           
+          begin: mod_begin,
           end: mod_end
         }
         const res = await axios.patch(

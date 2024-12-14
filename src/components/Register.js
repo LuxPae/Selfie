@@ -40,7 +40,7 @@ export default function Register()
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/auth/register",
+        "http://localhost:5001/auth/register", // TODO: 5000
         { ...formData },
         { headers: { "Content-Type": "application/json" } }
       )
