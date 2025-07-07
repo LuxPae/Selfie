@@ -38,11 +38,14 @@ export const NotesContent = () => {
 
     const {user} = useContext(GlobalContext);
 
-    useEffect(() => fetchNotes(), []);
+    useEffect(() => {
+        fetchNotes();
+    }, []);
 
-    function fetchNotes() {
+    
+    async function fetchNotes() {
         // @ts-ignore
-        getNotes({token: user.token}).then(value => {
+        await getNotes({token: user.token}).then(value => {
             const result = (value?.data as NoteModel[]) || [];
             setNoteList(result);
         });
@@ -60,7 +63,9 @@ export const NotesContent = () => {
                 {noteList.map((value, index) => {
                     return <NoteCard key={`note_id_${index}`} cursor={'pointer'} onDeleteFunction={id => {
                         // @ts-ignore
-                        deleteNote({id: id || "", token: user.token}).then(value1 => fetchNotes());
+                        deleteNote({id: id || "", token: user.token}).then(value1 => {fetchNotes().then(() => {
+                            navigate('/notes');
+                        });});
                     }} model={value} index={index} onClick={() => {
                         setCurrentId(value._id);
                         navigate(`/notes/detail/${value._id}`);

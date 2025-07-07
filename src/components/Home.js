@@ -175,8 +175,7 @@ export const NoteEntry = ({note}) => {
     const navigate = useNavigate()
 
     const goToNote = (n) => {
-        alert("TODO")
-        navigate("/notes")
+        navigate(`/notes/detail/${note._id}`)
     }
 
     return (

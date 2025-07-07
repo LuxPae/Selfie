@@ -28,7 +28,7 @@ export default function ContextWrapper({children}) {
 
     const [currentDate, setCurrentDate] = useState(dayjs());
 
-    const [currentTime, setCurrentTime] = useState();
+    //const [currentTime, setCurrentTime] = useState();
 
     const [calendarDate, setCalendarDate] = useState(currentDate.startOf("month"))
     const [selectedDay, setSelectedDay] = useState(currentDate);
@@ -187,8 +187,8 @@ export default function ContextWrapper({children}) {
             newBio,
             setNewBio,
 
-            currentTime,
-            setCurrentTime,
+            //currentTime,
+            //setCurrentTime,
 
             currentDate,
             setCurrentDate,

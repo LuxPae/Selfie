@@ -51,7 +51,7 @@ const TimerPage = () => {
 
     const showSnackbar = useSnackbar();
 
-    const {currentTime: currentDate} = useContext(GlobalContext);
+    const {currentDate: currentDate} = useContext(GlobalContext);
 
     const currentTime = currentDate || Date.now();
 

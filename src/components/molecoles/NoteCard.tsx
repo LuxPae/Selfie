@@ -36,7 +36,11 @@ export const NoteCard = ({model, index, onDeleteFunction, ...other}: NoteCardPro
         // borderRadius={"16px"} padding={"16px"} backgroundColor={backgroundColors[index % 10]} {...other}>
                    borderRadius={"16px"} padding={"16px"} backgroundColor={blueColor} {...other}>
         <FaTrash color={'white'}
-                 onClick={() => onDeleteFunction(_id)}
+                 onClick={(e) => 
+                    {
+                        e.stopPropagation();
+                        onDeleteFunction(_id);
+                }}
                  style={{
                      position: 'absolute',
                      top: '24px',
